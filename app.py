@@ -672,31 +672,25 @@ st.markdown(
     """
     <div class="sx-top-header">
         <div class="sx-brand-wrapper">
-            <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-                <path d="M24 4L8 10V22C8 32.5 14.8 42.1 24 44.5C33.2 42.1 40 32.5 40 22V10L24 4Z" stroke="#38BDF8" stroke-width="2.2" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.08)"/>
-                <path d="M24 8L12 13V22C12 29.8 16.8 37 24 39.5C31.2 37 36 29.8 36 22V13L24 8Z" stroke="rgba(99, 102, 241, 0.45)" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
-                <path d="M17 18L31 30M31 18L17 30" stroke="#38BDF8" stroke-width="2.6" stroke-linecap="round"/>
-                <circle cx="24" cy="24" r="3" fill="#38BDF8" stroke="#0A111C" stroke-width="1.5"/>
+            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+                <path d="M24 3.5L7 10.5V22C7 33.2 14.3 43.5 24 46C33.7 43.5 41 33.2 41 22V10.5L24 3.5Z" stroke="#38BDF8" stroke-width="2.4" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.08)"/>
+                <path d="M24 8L11.5 13.8V22C11.5 30.5 16.8 38.3 24 40.8C31.2 38.3 36.5 30.5 36.5 22V13.8L24 8Z" stroke="rgba(99, 102, 241, 0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+                <path d="M16.5 17.5L31.5 30.5M31.5 17.5L16.5 30.5" stroke="#38BDF8" stroke-width="2.8" stroke-linecap="round"/>
+                <circle cx="24" cy="24" r="3.2" fill="#38BDF8" stroke="#0A111C" stroke-width="1.6"/>
             </svg>
             <div class="sx-brand-text">
-                <div style="display:flex; align-items:baseline; gap:10px;">
-                    <span class="sx-brand-title">SENTINEL<span style="color:#38BDF8;">X</span></span>
-                    <span class="sx-brand-sub">AUTONOMOUS SECURITY OPERATIONS CENTER</span>
-                </div>
-                <div class="sx-chips-row">
-                    <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
-                    <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
-                    <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>CONTAINMENT READY</span>
-                </div>
+                <div class="sx-brand-title">SENTINEL<span style="color:#38BDF8;">X</span></div>
+                <div class="sx-brand-sub">Autonomous Security Operations Center</div>
             </div>
         </div>
         <div class="sx-top-status-right">
-            <div class="sx-live-badge">
-                <span class="sx-chip-dot sx-dot-green"></span>
-                TELEMETRY STREAM ACTIVE
+            <div class="sx-chips-row" style="margin-top:0;">
+                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
+                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
+                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>CONTAINMENT READY</span>
             </div>
-            <div style="color:#64748B; font-size:0.70rem; font-family:ui-monospace, monospace; letter-spacing:0.5px; margin-top:2px;">
-                HYBRID AGENT • SQLITE WAL ENGINE
+            <div style="color:#64748B; font-size:0.68rem; font-family:ui-monospace, monospace; letter-spacing:0.6px; margin-top:3px;">
+                ● TELEMETRY STREAM ACTIVE • SQLITE WAL ENGINE
             </div>
         </div>
     </div>
@@ -705,12 +699,12 @@ st.markdown(
 )
 
 nav_items = [
-    ("⌂  Dashboard", "Dashboard", "nav_dashboard"),
-    ("◉  Live Events", "Live Events", "nav_live_events"),
-    ("!  Security Alerts", "Security Alerts", "nav_security_alerts"),
-    ("◆  Incidents", "Incidents", "nav_incidents"),
-    ("✣  MITRE ATT&CK", "MITRE ATT&CK", "nav_mitre"),
-    ("≡  Audit Logs", "Audit Logs", "nav_audit")
+    ("Dashboard", "Dashboard", "nav_dashboard"),
+    ("Live Events", "Live Events", "nav_live_events"),
+    ("Security Alerts", "Security Alerts", "nav_security_alerts"),
+    ("Incidents", "Incidents", "nav_incidents"),
+    ("MITRE ATT&CK", "MITRE ATT&CK", "nav_mitre"),
+    ("Audit Logs", "Audit Logs", "nav_audit")
 ]
 
 nav_cols = st.columns([1, 1, 1, 1, 1, 1, 1])
@@ -729,7 +723,7 @@ for col, (label, page, key) in zip(nav_cols[:6], nav_items):
 
 with nav_cols[6]:
     if st.button(
-        "🔄 Refresh Telemetry",
+        "🔄 Refresh",
         use_container_width=True,
         key="nav_refresh_telemetry"
     ):
@@ -1170,26 +1164,25 @@ if selected_page == "Dashboard":
 
     st.markdown(
         """
-        <div class="sx-panel" style="margin-bottom: 1.25rem; border-left: 3px solid #38BDF8;">
+        <div class="sx-panel" style="margin-bottom: 1.25rem; border-left: 4px solid #38BDF8; background: #101B2B;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <div>
-                    <div style="color:#38BDF8; font-size:0.72rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;">
-                        DEFENSIVE TELEMETRY & THREAT ORCHESTRATION PLATFORM
+                    <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
+                        <span style="font-size:1.85rem; font-weight:900; letter-spacing:2px; color:#F8FAFC; line-height:1.1;">
+                            SENTINEL<span style="color:#38BDF8;">X</span>
+                        </span>
+                        <span style="font-size:0.80rem; font-weight:700; letter-spacing:1.4px; color:#94A3B8; text-transform:uppercase;">
+                            Autonomous Security Operations Center
+                        </span>
                     </div>
-                    <div style="font-size:1.65rem; font-weight:800; color:#F1F5F9; margin-top:2px; letter-spacing:-0.5px;">
-                        Enterprise Threat Telemetry & Incident Intelligence
-                    </div>
-                    <div style="color:#94A3B8; font-size:0.84rem; margin-top:4px;">
-                        Continuous Ingestion • Rule-Engine Correlation • Risk Prioritization • Automated Containment
+                    <div style="color:#94A3B8; font-size:0.88rem; margin-top:6px; letter-spacing:0.2px;">
+                        Real-time detection, investigation and policy-controlled response.
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:8px 14px; text-align:right;">
-                        <div style="color:#64748B; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;">SYSTEM STATUS</div>
-                        <div style="color:#10B981; font-weight:800; font-size:0.82rem; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; justify-content:flex-end;">
-                            <span class="sx-chip-dot sx-dot-green"></span> ALL DEFENSES NOMINAL
-                        </div>
-                    </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
+                    <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>DETECTION ACTIVE</span>
+                    <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>CONTAINMENT READY</span>
                 </div>
             </div>
         </div>
@@ -1769,14 +1762,13 @@ elif selected_page == "Security Alerts":
 
                 with info_col1:
                     st.write("**Severity Level**")
-                    if risk_level == "CRITICAL":
-                        st.error("CRITICAL")
-                    elif risk_level == "HIGH":
-                        st.warning("HIGH")
-                    elif risk_level == "MEDIUM":
-                        st.warning("MEDIUM")
-                    else:
-                        st.success("LOW")
+                    sev_badge = {
+                        "CRITICAL": '<span class="sx-badge sx-badge-critical" style="font-size:0.80rem; padding:4px 12px;">CRITICAL</span>',
+                        "HIGH": '<span class="sx-badge sx-badge-high" style="font-size:0.80rem; padding:4px 12px;">HIGH</span>',
+                        "MEDIUM": '<span class="sx-badge sx-badge-medium" style="font-size:0.80rem; padding:4px 12px;">MEDIUM</span>',
+                        "LOW": '<span class="sx-badge sx-badge-low" style="font-size:0.80rem; padding:4px 12px;">LOW</span>',
+                    }.get(risk_level, f'<span class="sx-badge sx-badge-low">{risk_level}</span>')
+                    st.markdown(sev_badge, unsafe_allow_html=True)
 
                 with info_col2:
                     st.write("**Source IP**")
@@ -1809,12 +1801,14 @@ elif selected_page == "Security Alerts":
 
                     with inc_col2:
                         st.write("**Incident Workflow Status**")
-                        if incident_status in ["CONTAINED", "RESOLVED"]:
-                            st.success(f"● {incident_status}")
-                        elif incident_status in ["INVESTIGATING", "TRIAGED"]:
-                            st.warning(f"● {incident_status}")
-                        else:
-                            st.info(f"● {incident_status}")
+                        status_badge = {
+                            "CONTAINED": '<span class="sx-badge sx-badge-success" style="font-size:0.75rem; padding:3px 10px;">● CONTAINED</span>',
+                            "RESOLVED": '<span class="sx-badge sx-badge-success" style="font-size:0.75rem; padding:3px 10px;">● RESOLVED</span>',
+                            "INVESTIGATING": '<span class="sx-badge sx-badge-high" style="font-size:0.75rem; padding:3px 10px;">● INVESTIGATING</span>',
+                            "TRIAGED": '<span class="sx-badge sx-badge-medium" style="font-size:0.75rem; padding:3px 10px;">● TRIAGED</span>',
+                            "NEW": '<span class="sx-badge sx-badge-low" style="font-size:0.75rem; padding:3px 10px;">● NEW</span>',
+                        }.get(incident_status, f'<span class="sx-badge sx-badge-low">● {incident_status}</span>')
+                        st.markdown(status_badge, unsafe_allow_html=True)
 
                     with st.expander(f"View Confirmed Detection Evidence ({len(detector_event_ids)} Events)"):
                         if detector_event_ids:
@@ -1984,14 +1978,13 @@ elif selected_page == "Incidents":
 
                     with info_col2:
                         st.write("**Severity**")
-                        if severity == "CRITICAL":
-                            st.error("CRITICAL")
-                        elif severity == "HIGH":
-                            st.warning("HIGH")
-                        elif severity == "MEDIUM":
-                            st.warning("MEDIUM")
-                        else:
-                            st.success("LOW")
+                        sev_badge = {
+                            "CRITICAL": '<span class="sx-badge sx-badge-critical" style="font-size:0.80rem; padding:4px 12px;">CRITICAL</span>',
+                            "HIGH": '<span class="sx-badge sx-badge-high" style="font-size:0.80rem; padding:4px 12px;">HIGH</span>',
+                            "MEDIUM": '<span class="sx-badge sx-badge-medium" style="font-size:0.80rem; padding:4px 12px;">MEDIUM</span>',
+                            "LOW": '<span class="sx-badge sx-badge-low" style="font-size:0.80rem; padding:4px 12px;">LOW</span>',
+                        }.get(severity, f'<span class="sx-badge sx-badge-low">{severity}</span>')
+                        st.markdown(sev_badge, unsafe_allow_html=True)
 
                     with info_col3:
                         st.write("**MITRE Technique**")
@@ -2013,15 +2006,30 @@ elif selected_page == "Incidents":
                     lifecycle = ["NEW", "TRIAGED", "INVESTIGATING", "CONTAINED", "RESOLVED"]
                     lifecycle_index = lifecycle.index(status) if status in lifecycle else 0
 
-                    lifecycle_cols = st.columns(len(lifecycle))
-                    for index, stage in enumerate(lifecycle):
-                        with lifecycle_cols[index]:
-                            if index < lifecycle_index:
-                                st.success(f"✓ {stage}")
-                            elif index == lifecycle_index:
-                                st.warning(f"● {stage}")
-                            else:
-                                st.info(f"○ {stage}")
+                    step_html_items = []
+                    for idx, stage in enumerate(lifecycle):
+                        if idx < lifecycle_index:
+                            step_style = "background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #10B981;"
+                            marker = "✓"
+                        elif idx == lifecycle_index:
+                            step_style = "background: rgba(56, 189, 248, 0.18); border: 1px solid #38BDF8; color: #38BDF8; font-weight: 800; box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);"
+                            marker = "●"
+                        else:
+                            step_style = "background: #152336; border: 1px solid #1E3148; color: #64748B;"
+                            marker = "○"
+
+                        step_html_items.append(
+                            f'<div style="flex:1; min-width:85px; padding:6px 10px; border-radius:6px; text-align:center; font-size:0.72rem; font-weight:700; {step_style}">'
+                            f'{marker} {stage}'
+                            f'</div>'
+                        )
+
+                    stepper_html = f"""
+                    <div style="display:flex; align-items:center; gap:6px; margin:6px 0 14px; overflow-x:auto;">
+                        {' <span style="color:#2D486B; font-weight:bold; font-size:0.75rem;">→</span> '.join(step_html_items)}
+                    </div>
+                    """
+                    st.markdown(stepper_html, unsafe_allow_html=True)
 
                     st.divider()
 
@@ -2305,10 +2313,33 @@ elif selected_page == "MITRE ATT&CK":
                     t_head1, t_head2 = st.columns([3, 1])
                     with t_head1:
                         st.markdown(f"### 🎯 {mapping['technique']} — {mapping['name']}")
-                        st.caption(f"Enterprise Tactic: **{mapping['tactic']}**")
                     with t_head2:
                         st.markdown(f"[Official MITRE Doc ↗]({mitre_url})")
 
+                    matching_alerts = [a for a in risk_alerts if a.get("mitre_technique") == technique]
+                    det_types = ", ".join(sorted(list(set(normalize_alert_type(a.get("alert_type")) for a in matching_alerts)))) or "RULE ENGINE"
+                    evidence_count = sum(len(a.get("evidence", {}).get("event_ids", [])) for a in matching_alerts)
+
+                    trace_html = f"""
+                    <div style="display:flex; align-items:center; gap:6px; margin:8px 0 12px; overflow-x:auto;">
+                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#F1F5F9;">
+                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">DETECTION ENGINE</span><br><b>{det_types}</b>
+                        </div>
+                        <span style="color:#38BDF8; font-size:0.8rem; font-weight:bold;">→</span>
+                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#38BDF8; font-family:monospace;">
+                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">TECHNIQUE</span><br><b>{mapping['technique']}</b>
+                        </div>
+                        <span style="color:#38BDF8; font-size:0.8rem; font-weight:bold;">→</span>
+                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#818CF8;">
+                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">TACTIC</span><br><b>{mapping['tactic']}</b>
+                        </div>
+                        <span style="color:#38BDF8; font-size:0.8rem; font-weight:bold;">→</span>
+                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#10B981;">
+                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">CONFIRMED EVIDENCE</span><br><b>{evidence_count} Events Linked</b>
+                        </div>
+                    </div>
+                    """
+                    st.markdown(trace_html, unsafe_allow_html=True)
                     st.write(mapping["description"])
             else:
                 with st.container(border=True):
