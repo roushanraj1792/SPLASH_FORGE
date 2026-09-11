@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import os
 import sys
+import time
 from pathlib import Path
 
 # Add SentinelX project root to Python path
@@ -39,6 +40,8 @@ def generate_privilege_escalation_events():
     print("SentinelX Privilege Escalation Simulator")
     print("---------------------------------------")
 
+    event_ids = []
+
     for i in range(3):
         event = {
             "timestamp": datetime.now(
@@ -58,6 +61,7 @@ def generate_privilege_escalation_events():
         }
 
         event_id = submit_event(event)
+        event_ids.append(event_id)
 
         print(
             f"Privilege escalation event "
@@ -65,9 +69,12 @@ def generate_privilege_escalation_events():
             f"(event_id={event_id})"
         )
 
+        time.sleep(0.3)
+
     print("\nPrivilege escalation simulation completed.")
     print(f"Source IP: {SOURCE_IP}")
     print("Generated events: 3")
+    return event_ids
 
 
 if __name__ == "__main__":

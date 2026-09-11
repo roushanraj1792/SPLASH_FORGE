@@ -40,6 +40,7 @@ def simulate_suspicious_authentication():
     print("--------------------------------------------")
 
     attacker_ip = "192.168.1.70"
+    event_ids = []
 
     for attempt in range(1, 6):
 
@@ -58,6 +59,7 @@ def simulate_suspicious_authentication():
         }
 
         event_id = submit_event(event)
+        event_ids.append(event_id)
 
         print(
             f"Successful login #{attempt} "
@@ -65,9 +67,10 @@ def simulate_suspicious_authentication():
             f"(event_id={event_id})"
         )
 
-        time.sleep(1)
+        time.sleep(0.3)
 
     print("\nSuspicious authentication simulation completed.")
+    return event_ids
 
 
 if __name__ == "__main__":

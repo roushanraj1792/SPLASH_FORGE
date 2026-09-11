@@ -38,6 +38,7 @@ def simulate_brute_force():
     print("--------------------------------------")
 
     attacker_ip = "192.168.1.101"
+    event_ids = []
 
     for attempt in range(1, 6):
 
@@ -54,6 +55,7 @@ def simulate_brute_force():
         }
 
         event_id = submit_event(event)
+        event_ids.append(event_id)
 
         print(
             f"Failed login attempt #{attempt} "
@@ -61,9 +63,10 @@ def simulate_brute_force():
             f"(event_id={event_id})"
         )
 
-        time.sleep(1)
+        time.sleep(0.4)
 
     print("\nBrute-force simulation completed.")
+    return event_ids
 
 
 if __name__ == "__main__":

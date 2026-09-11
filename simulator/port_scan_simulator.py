@@ -41,6 +41,7 @@ def simulate_port_scan():
     print("------------------------------------")
 
     attacker_ip = "192.168.1.61"
+    event_ids = []
 
     ports = [
         21, 22, 23, 25, 53,
@@ -62,6 +63,7 @@ def simulate_port_scan():
         }
 
         event_id = submit_event(event)
+        event_ids.append(event_id)
 
         print(
             f"Connection attempt from "
@@ -69,9 +71,10 @@ def simulate_port_scan():
             f"(event_id={event_id})"
         )
 
-        time.sleep(0.5)
+        time.sleep(0.2)
 
     print("\nPort-scan simulation completed.")
+    return event_ids
 
 
 if __name__ == "__main__":

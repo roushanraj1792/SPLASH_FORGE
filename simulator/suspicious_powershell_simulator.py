@@ -57,6 +57,8 @@ def generate_suspicious_powershell_events():
     print("SentinelX Suspicious PowerShell Simulator")
     print("-----------------------------------------")
 
+    event_ids = []
+
     for index, event in enumerate(
         suspicious_events,
         start=1
@@ -85,6 +87,7 @@ def generate_suspicious_powershell_events():
         }
 
         event_id = submit_event(event_data)
+        event_ids.append(event_id)
 
         print(
             f"Suspicious PowerShell event "
@@ -93,7 +96,7 @@ def generate_suspicious_powershell_events():
             f"(event_id={event_id})"
         )
 
-        time.sleep(1)
+        time.sleep(0.3)
 
     print()
     print("Suspicious PowerShell simulation completed.")
@@ -102,6 +105,7 @@ def generate_suspicious_powershell_events():
         f"Generated events: "
         f"{len(suspicious_events)}"
     )
+    return event_ids
 
 
 if __name__ == "__main__":
