@@ -157,6 +157,38 @@ def initialize_database():
         """
     )
 
+    # --------------------------------------------------
+    # PERFORMANCE INDEXES
+    # --------------------------------------------------
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_security_events_source_ip ON security_events (source_ip)"
+    )
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_security_events_timestamp ON security_events (timestamp DESC)"
+    )
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_security_events_event_type ON security_events (event_type)"
+    )
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_incidents_source_ip ON incidents (source_ip)"
+    )
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents (status)"
+    )
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_incident_events_lookup ON incident_events (incident_id, event_id)"
+    )
+
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_status_history_incident_id ON incident_status_history (incident_id)"
+    )
+
     connection.commit()
 
     connection.close()

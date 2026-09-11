@@ -1,4 +1,4 @@
-﻿# Secrets
+# Secrets
 .env
 .env.*
 !.env.example
@@ -33,3 +33,6 @@ htmlcov/
 # OS
 Thumbs.db
 .DS_Store
+
+# Scratch
+scratch/

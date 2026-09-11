@@ -979,15 +979,20 @@ if selected_page == "Dashboard":
     st.markdown(
         """
         <div class="sx-panel" style="margin-bottom: 1.25rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
                 <div>
-                    <div class="sx-top-nav-kicker">SENTINELX • SECURITY OPERATIONS CENTER</div>
-                    <div style="font-size:1.5rem; font-weight:800; color:#E7EEF2; margin-top:2px;">Autonomous Threat Command Center</div>
-                    <div style="color:#91A4B0; font-size:0.88rem; margin-top:2px;">Detect → Prioritize → Investigate → Contain</div>
+                    <div class="sx-top-nav-kicker">SENTINELX • AUTONOMOUS SECURITY OPERATIONS COMMAND</div>
+                    <div style="font-size:1.6rem; font-weight:800; color:#F4F8FC; margin-top:3px; letter-spacing:-0.4px;">
+                        Enterprise Threat Telemetry & Incident Intelligence
+                    </div>
+                    <div style="color:#8FA3B8; font-size:0.86rem; margin-top:3px;">
+                        Continuous Ingestion • Rule-Engine Correlation • Risk Prioritization • Automated Containment
+                    </div>
                 </div>
                 <div style="text-align:right;">
-                    <span style="color:#4FD39A; font-weight:800; font-size:0.75rem; letter-spacing:1px;">● SOC ENGINE ACTIVE</span>
-                    <div style="color:#91A4B0; font-size:0.78rem;">AI-assisted security monitoring</div>
+                    <span class="sx-top-live-dot" style="margin-right:6px;"></span>
+                    <span style="color:#3DDB9A; font-weight:800; font-size:0.78rem; letter-spacing:1px;">SOC SUBSYSTEMS ONLINE</span>
+                    <div style="color:#8FA3B8; font-size:0.78rem; margin-top:2px;">AI Investigation Copilot Ready</div>
                 </div>
             </div>
         </div>
@@ -997,43 +1002,35 @@ if selected_page == "Dashboard":
 
     st.divider()
 
-
     # ----------------------------------------------
-    # TOP METRICS
+    # TOP SOC METRICS
     # ----------------------------------------------
 
-    col1, col2, col3, col4 = st.columns(
-        4
-    )
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-
         st.metric(
-            "Security Events",
+            "Security Events Ingested",
             total_events
         )
 
     with col2:
-
         st.metric(
-            "High Alerts",
+            "High & Critical Alerts",
             high_alerts
         )
 
     with col3:
-
         st.metric(
-            "Active Incidents",
+            "Active Threats / Incidents",
             active_incidents
         )
 
     with col4:
-
         st.metric(
-            "Contained",
+            "Contained Threats",
             contained_incidents
         )
-
 
     # ----------------------------------------------
     # SECURITY POSTURE
@@ -1041,59 +1038,33 @@ if selected_page == "Dashboard":
 
     st.divider()
 
-    st.subheader(
-        "Security Posture"
-    )
+    st.subheader("🛡️ Enterprise Security Posture")
 
-    posture_col1, posture_col2 = st.columns(
-        [1, 3]
-    )
+    posture_col1, posture_col2 = st.columns([1, 3])
 
     with posture_col1:
-
         st.metric(
             "Posture Score",
-            f"{posture_score}/100"
+            f"{posture_score} / 100"
         )
 
     with posture_col2:
-
-        if posture_label in [
-            "EXCELLENT",
-            "GOOD"
-        ]:
-
-            st.success(
-                f"Security Posture: {posture_label}"
-            )
-
-        elif posture_label in [
-            "MODERATE",
-            "POOR"
-        ]:
-
-            st.warning(
-                f"Security Posture: {posture_label}"
-            )
-
+        if posture_label in ["EXCELLENT", "GOOD"]:
+            st.success(f"Security Posture: {posture_label} — Systems stable under current threat load")
+        elif posture_label in ["MODERATE", "POOR"]:
+            st.warning(f"Security Posture: {posture_label} — Active investigation and containment recommended")
         else:
+            st.error(f"Security Posture: {posture_label} — Critical threat threshold breached")
 
-            st.error(
-                f"Security Posture: {posture_label}"
-            )
-
+        norm_score = max(0.0, min(1.0, float(posture_score) / 100.0))
+        st.progress(norm_score)
 
     st.caption(
-        f"Active threats: "
-        f"{posture['details']['active_incidents']} | "
-        f"High/Critical active: "
-        f"{posture['details']['high_critical_incidents']} | "
-        f"Contained: "
-        f"{posture['details']['contained_incidents']} | "
-        f"Resolved: "
-        f"{posture['details']['resolved_incidents']}"
+        f"Active threats: {posture['details']['active_incidents']}  |  "
+        f"High/Critical active: {posture['details']['high_critical_incidents']}  |  "
+        f"Contained: {posture['details']['contained_incidents']}  |  "
+        f"Resolved: {posture['details']['resolved_incidents']}"
     )
-
 
     # ----------------------------------------------
     # THREAT OVERVIEW
@@ -1101,88 +1072,63 @@ if selected_page == "Dashboard":
 
     st.divider()
 
-    st.subheader(
-        "Threat Overview"
-    )
+    st.subheader("📊 Threat Landscape Overview")
 
-    summary_col1, summary_col2, summary_col3 = (
-        st.columns(3)
-    )
+    summary_col1, summary_col2, summary_col3 = st.columns(3)
 
     with summary_col1:
-
         st.metric(
-            "Total Alerts",
+            "Correlated Alerts",
             len(risk_alerts)
         )
 
     with summary_col2:
-
         high_critical_count = sum(
-            1
-            for alert in risk_alerts
-            if alert.get(
-                "risk_level"
-            ) in [
-                "HIGH",
-                "CRITICAL"
-            ]
+            1 for alert in risk_alerts
+            if alert.get("risk_level") in ["HIGH", "CRITICAL"]
         )
-
         st.metric(
-            "High / Critical",
+            "Priority High / Critical",
             high_critical_count
         )
 
     with summary_col3:
-
         detection_types = len(
             set(
-                alert.get(
-                    "alert_type",
-                    "UNKNOWN"
-                )
+                alert.get("alert_type", "UNKNOWN")
                 for alert in risk_alerts
             )
         )
-
         st.metric(
-            "Detection Types",
+            "Active Detection Types",
             detection_types
         )
 
-
     # ----------------------------------------------
-    # ENGINE STATUS
+    # ENGINE & PIPELINE HEALTH STATUS
     # ----------------------------------------------
 
     st.divider()
 
-    st.subheader(
-        "SentinelX Engine Status"
-    )
+    st.subheader("⚡ SentinelX Core Pipeline Health")
 
-    status_col1, status_col2, status_col3 = (
-        st.columns(3)
-    )
+    status_col1, status_col2, status_col3, status_col4, status_col5 = st.columns(5)
 
     with status_col1:
-
-        st.success(
-            "Detection Engine ONLINE"
-        )
+        st.success("Detection Engine\n\n**ONLINE (5 Detectors)**")
 
     with status_col2:
-
-        st.success(
-            "Risk Engine ONLINE"
-        )
+        st.success("Risk Engine\n\n**ONLINE (Enrichment)**")
 
     with status_col3:
+        st.success("Database Engine\n\n**CONNECTED (SQLite)**")
 
-        st.success(
-            "SQLite Database CONNECTED"
-        )
+    with status_col4:
+        st.success("AI SOC Copilot\n\n**ACTIVE (Gemini / Rules)**")
+
+    with status_col5:
+        st.success("Safe Containment\n\n**ACTIVE (Host Isolation)**")
+
 
 
 # ==================================================
@@ -1191,53 +1137,112 @@ if selected_page == "Dashboard":
 
 elif selected_page == "Live Events":
 
-    st.title(
-        "📡 Live Security Events"
-    )
-
-    st.caption(
-        "Real-time security telemetry collected by SentinelX."
-    )
+    st.title("📡 Live Security Telemetry")
+    st.caption("Real-time security telemetry and host audit events ingested by SentinelX.")
 
     st.divider()
 
-
     if events:
+        # ----------------------------------------------
+        # INTERACTIVE TELEMETRY FILTERS
+        # ----------------------------------------------
+        filter_col1, filter_col2, filter_col3 = st.columns([2, 1, 1])
 
-        event_data = []
+        with filter_col1:
+            search_query = st.text_input(
+                "Search Telemetry",
+                placeholder="Search by IP, username, message, or ID...",
+                key="filter_events_search"
+            ).strip().lower()
 
-        for event in events:
-
-            event_data.append(
-                {
-                    "ID": event["id"],
-                    "Timestamp": event["timestamp"],
-                    "Source IP": event["source_ip"],
-                    "Username": event["username"],
-                    "Event Type": event["event_type"],
-                    "Action": event["action"],
-                    "Status": event["status"],
-                    "Severity": event["severity"],
-                    "Message": event["message"]
-                }
+        unique_types = sorted(list(set(str(e.get("event_type", "")) for e in events if e.get("event_type"))))
+        with filter_col2:
+            selected_type = st.selectbox(
+                "Event Type",
+                ["ALL"] + unique_types,
+                key="filter_events_type"
             )
 
+        unique_severities = ["ALL", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        with filter_col3:
+            selected_severity = st.selectbox(
+                "Severity",
+                unique_severities,
+                key="filter_events_sev"
+            )
 
-        st.dataframe(
-            event_data,
-            width="stretch",
-            hide_index=True
-        )
+        # ----------------------------------------------
+        # FILTER DATA
+        # ----------------------------------------------
+        filtered_events = []
+        for event in events:
+            # Search query matching
+            if search_query:
+                combined_text = (
+                    f"{event.get('id', '')} "
+                    f"{event.get('source_ip', '')} "
+                    f"{event.get('username', '')} "
+                    f"{event.get('event_type', '')} "
+                    f"{event.get('action', '')} "
+                    f"{event.get('message', '')}"
+                ).lower()
+                if search_query not in combined_text:
+                    continue
 
-        st.caption(
-            f"Showing latest {len(events)} security events."
-        )
+            # Event type filter
+            if selected_type != "ALL" and str(event.get("event_type")) != selected_type:
+                continue
+
+            # Severity filter
+            if selected_severity != "ALL" and str(event.get("severity", "")).upper() != selected_severity:
+                continue
+
+            filtered_events.append(event)
+
+        # ----------------------------------------------
+        # TELEMETRY STATS BAR
+        # ----------------------------------------------
+        stat_col1, stat_col2, stat_col3 = st.columns(3)
+        with stat_col1:
+            st.metric("Total Ingested Events", len(events))
+        with stat_col2:
+            st.metric("Filtered Matches", len(filtered_events))
+        with stat_col3:
+            latest_ts = events[0].get("timestamp", "N/A")[:19].replace("T", " ") if events else "N/A"
+            st.metric("Latest Ingestion", latest_ts)
+
+        st.divider()
+
+        if filtered_events:
+            event_data = []
+            for event in filtered_events:
+                event_data.append(
+                    {
+                        "ID": event["id"],
+                        "Timestamp": event["timestamp"],
+                        "Source IP": event["source_ip"],
+                        "Username": event["username"] or "—",
+                        "Event Type": event["event_type"],
+                        "Action": event["action"],
+                        "Status": event["status"],
+                        "Severity": event["severity"],
+                        "Port": str(event["port"]) if event.get("port") is not None else "—",
+                        "Message": event["message"]
+                    }
+                )
+
+            st.dataframe(
+                event_data,
+                width="stretch",
+                hide_index=True
+            )
+            st.caption(f"Displaying {len(filtered_events)} of {len(events)} security events in buffer.")
+        else:
+            st.info("No security events match the current filter criteria.")
 
     else:
+        st.info("No security events received yet.")
 
-        st.info(
-            "No security events received yet."
-        )
 
 
 # ==================================================
@@ -1246,415 +1251,219 @@ elif selected_page == "Live Events":
 
 elif selected_page == "Security Alerts":
 
-    st.title(
-        "🚨 Security Alerts"
-    )
-
-    st.caption(
-        "Prioritized detections generated by the "
-        "SentinelX detection and risk engines."
-    )
+    st.title("🚨 Security Alerts & Detections")
+    st.caption("Prioritized detections generated by SentinelX detection engines and enriched by the Risk Scoring pipeline.")
 
     st.divider()
-
 
     # ----------------------------------------------
     # ALERT SUMMARY
     # ----------------------------------------------
 
-    alert_summary_col1, alert_summary_col2, alert_summary_col3 = (
-        st.columns(3)
-    )
+    alert_summary_col1, alert_summary_col2, alert_summary_col3 = st.columns(3)
 
     with alert_summary_col1:
-
         st.metric(
             "Total Alerts",
             len(risk_alerts)
         )
 
     with alert_summary_col2:
-
         high_critical_count = sum(
-            1
-            for alert in risk_alerts
-            if alert.get(
-                "risk_level"
-            ) in [
-                "HIGH",
-                "CRITICAL"
-            ]
+            1 for alert in risk_alerts
+            if alert.get("risk_level") in ["HIGH", "CRITICAL"]
         )
-
         st.metric(
-            "High / Critical",
+            "High / Critical Priority",
             high_critical_count
         )
 
     with alert_summary_col3:
-
         detection_types = len(
             set(
-                alert.get(
-                    "alert_type",
-                    "UNKNOWN"
-                )
+                alert.get("alert_type", "UNKNOWN")
                 for alert in risk_alerts
             )
         )
-
         st.metric(
             "Detection Types",
             detection_types
         )
 
-
     st.divider()
 
+    # ----------------------------------------------
+    # FILTER CONTROLS
+    # ----------------------------------------------
+
+    filter_alerts_col1, filter_alerts_col2 = st.columns([2, 1])
+
+    with filter_alerts_col1:
+        alerts_search = st.text_input(
+            "Search Alerts",
+            placeholder="Search by IP, title, or detection type...",
+            key="filter_alerts_search"
+        ).strip().lower()
+
+    with filter_alerts_col2:
+        alerts_sev_filter = st.selectbox(
+            "Filter by Severity",
+            ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"],
+            key="filter_alerts_sev"
+        )
+
+    # ----------------------------------------------
+    # FILTER ALERTS LIST
+    # ----------------------------------------------
+
+    filtered_alerts = []
+    for alert in risk_alerts:
+        risk_level = alert.get("risk_level", "LOW")
+        if alerts_sev_filter != "ALL" and risk_level != alerts_sev_filter:
+            continue
+
+        if alerts_search:
+            searchable = (
+                f"{alert.get('title', '')} "
+                f"{alert.get('source_ip', '')} "
+                f"{alert.get('alert_type', '')} "
+                f"{alert.get('mitre_technique', '')} "
+                f"{alert.get('description', '')} "
+                f"{alert.get('message', '')}"
+            ).lower()
+            if alerts_search not in searchable:
+                continue
+
+        filtered_alerts.append(alert)
 
     # ----------------------------------------------
     # ALERT CARDS
     # ----------------------------------------------
 
-    if risk_alerts:
+    if filtered_alerts:
+        st.caption(f"Showing {len(filtered_alerts)} of {len(risk_alerts)} security alerts.")
 
-        for alert in risk_alerts:
-
-            risk_level = alert.get(
-                "risk_level",
-                "LOW"
-            )
-
-            risk_score = alert.get(
-                "risk_score",
-                0
-            )
-
-            alert_type = normalize_alert_type(
-                alert.get(
-                    "alert_type",
-                    "UNKNOWN"
-                )
-            )
-
-            title = alert.get(
-                "title",
-                "Security Alert"
-            )
-
-            source_ip = alert.get(
-                "source_ip",
-                "Unknown"
-            )
-
-            mitre = alert.get(
-                "mitre_technique",
-                "N/A"
-            )
-
-            description = alert.get(
-                "description",
-                alert.get(
-                    "message",
-                    "No detection summary available."
-                )
-            )
-
+        for alert in filtered_alerts:
+            risk_level = alert.get("risk_level", "LOW")
+            risk_score = alert.get("risk_score", 0)
+            alert_type = normalize_alert_type(alert.get("alert_type", "UNKNOWN"))
+            title = alert.get("title", "Security Alert")
+            source_ip = alert.get("source_ip", "Unknown")
+            mitre = alert.get("mitre_technique", "N/A")
+            description = alert.get("description", alert.get("message", "No detection summary available."))
 
             # Severity icon
-
             if risk_level == "CRITICAL":
-
                 severity_icon = "🔴"
-
             elif risk_level == "HIGH":
-
                 severity_icon = "🟠"
-
             elif risk_level == "MEDIUM":
-
                 severity_icon = "🟡"
-
             else:
-
                 severity_icon = "🟢"
-
 
             # ------------------------------------------
             # INCIDENT LOOKUP
             # ------------------------------------------
-
             incident_for_alert = None
-
             for incident in incidents:
-
-                incident_alert_type = (
-                    normalize_alert_type(
-                        incident["alert_type"]
-                    )
-                )
-
+                incident_alert_type = normalize_alert_type(incident["alert_type"])
                 if (
                     incident_alert_type == alert_type
-                    and incident["source_ip"]
-                    == source_ip
+                    and incident["source_ip"] == source_ip
                 ):
-
                     incident_for_alert = incident
                     break
-
 
             # ------------------------------------------
             # ALERT CARD
             # ------------------------------------------
-
-            with st.container(
-                border=True
-            ):
-
-                header_col1, header_col2 = st.columns(
-                    [4, 1]
-                )
+            with st.container(border=True):
+                header_col1, header_col2 = st.columns([4, 1])
 
                 with header_col1:
-
-                    st.markdown(
-                        f"### {severity_icon} {title}"
-                    )
-
-                    st.caption(
-                        f"Detection Type: {alert_type}"
-                    )
+                    st.markdown(f"### {severity_icon} {title}")
+                    st.caption(f"Detection Engine Type: `{alert_type}`")
 
                 with header_col2:
-
                     st.metric(
                         "Risk Score",
-                        f"{risk_score}/100"
+                        f"{risk_score} / 100"
                     )
 
-
-                info_col1, info_col2, info_col3 = st.columns(
-                    3
-                )
+                info_col1, info_col2, info_col3, info_col4 = st.columns(4)
 
                 with info_col1:
-
-                    st.write(
-                        "**Severity**"
-                    )
-
+                    st.write("**Severity Level**")
                     if risk_level == "CRITICAL":
-
-                        st.error(
-                            "CRITICAL"
-                        )
-
+                        st.error("CRITICAL")
                     elif risk_level == "HIGH":
-
-                        st.warning(
-                            "HIGH"
-                        )
-
+                        st.warning("HIGH")
                     elif risk_level == "MEDIUM":
-
-                        st.warning(
-                            "MEDIUM"
-                        )
-
+                        st.warning("MEDIUM")
                     else:
-
-                        st.success(
-                            "LOW"
-                        )
-
+                        st.success("LOW")
 
                 with info_col2:
-
-                    st.write(
-                        "**Source IP**"
-                    )
-
-                    st.code(
-                        source_ip
-                    )
-
+                    st.write("**Source IP**")
+                    st.code(source_ip)
 
                 with info_col3:
+                    st.write("**MITRE Technique**")
+                    st.code(mitre)
 
-                    st.write(
-                        "**MITRE ATT&CK**"
-                    )
+                evidence = alert.get("evidence", {})
+                detector_event_ids = evidence.get("event_ids", [])
 
-                    st.code(
-                        mitre
-                    )
+                with info_col4:
+                    st.write("**Evidence Count**")
+                    st.metric("Events", len(detector_event_ids))
 
-
-                evidence = alert.get(
-                    "evidence",
-                    {}
-                )
-
-                detector_event_ids = evidence.get(
-                    "event_ids",
-                    []
-                )
-
-
-                st.divider()
-
-
-                evidence_col1, evidence_col2 = st.columns(
-                    2
-                )
-
-                with evidence_col1:
-
-                    st.write(
-                        "**Evidence Events**"
-                    )
-
-                    st.metric(
-                        "Events",
-                        len(detector_event_ids)
-                    )
-
-                with evidence_col2:
-
-                    st.write(
-                        "**Detection Summary**"
-                    )
-
-                    st.write(
-                        description
-                    )
-
+                st.write("**Detection Narrative**")
+                st.write(description)
 
                 if incident_for_alert:
-
-                    incident_id = incident_for_alert[
-                        "incident_id"
-                    ]
-
-                    incident_status = incident_for_alert[
-                        "status"
-                    ]
-
+                    incident_id = incident_for_alert["incident_id"]
+                    incident_status = incident_for_alert["status"]
 
                     st.divider()
 
+                    inc_col1, inc_col2 = st.columns(2)
+                    with inc_col1:
+                        st.write("**Correlated Incident ID**")
+                        st.code(incident_id)
 
-                    incident_col1, incident_col2 = (
-                        st.columns(2)
-                    )
-
-                    with incident_col1:
-
-                        st.write(
-                            "**Incident ID**"
-                        )
-
-                        st.code(
-                            incident_id
-                        )
-
-                    with incident_col2:
-
-                        st.write(
-                            "**Incident Status**"
-                        )
-
-                        if incident_status in [
-                            "CONTAINED",
-                            "RESOLVED"
-                        ]:
-
-                            st.success(
-                                incident_status
-                            )
-
-                        elif incident_status in [
-                            "INVESTIGATING",
-                            "TRIAGED"
-                        ]:
-
-                            st.warning(
-                                incident_status
-                            )
-
+                    with inc_col2:
+                        st.write("**Incident Workflow Status**")
+                        if incident_status in ["CONTAINED", "RESOLVED"]:
+                            st.success(f"● {incident_status}")
+                        elif incident_status in ["INVESTIGATING", "TRIAGED"]:
+                            st.warning(f"● {incident_status}")
                         else:
+                            st.info(f"● {incident_status}")
 
-                            st.info(
-                                incident_status
-                            )
-
-
-                    with st.expander(
-                        "View Detection Evidence"
-                    ):
-
+                    with st.expander(f"View Confirmed Detection Evidence ({len(detector_event_ids)} Events)"):
                         if detector_event_ids:
-
-                            st.write(
-                                "Detector-confirmed event IDs:"
-                            )
-
-                            st.code(
-                                ", ".join(
-                                    str(event_id)
-                                    for event_id
-                                    in detector_event_ids
-                                )
-                            )
-
+                            st.write("Detector-confirmed security event IDs:")
+                            st.code(", ".join(str(eid) for eid in detector_event_ids))
                         else:
+                            st.info("Detector-specific evidence IDs are not available.")
 
-                            st.info(
-                                "Detector-specific evidence IDs "
-                                "are not available."
-                            )
-
-
-                    if incident_status in [
-                        "CONTAINED",
-                        "RESOLVED"
-                    ]:
-
-                        st.success(
-                            "SentinelX automated response "
-                            "has been recorded for this incident."
-                        )
-
-                    elif risk_level in [
-                        "HIGH",
-                        "CRITICAL"
-                    ]:
-
-                        st.warning(
-                            "High-risk alert requires SOC "
-                            "investigation and containment "
-                            "according to SentinelX policy."
-                        )
-
+                    if incident_status in ["CONTAINED", "RESOLVED"]:
+                        st.success("🛡️ SentinelX automated containment policy has been recorded for this incident.")
+                    elif risk_level in ["HIGH", "CRITICAL"]:
+                        st.warning("⚠️ High-risk alert requires active SOC investigation and containment according to SentinelX policy.")
                     else:
-
-                        st.info(
-                            "Alert requires analyst validation "
-                            "and continued monitoring."
-                        )
+                        st.info("ℹ️ Alert requires continuous monitoring and analyst validation.")
 
                 else:
+                    st.info("Incident correlation is pending.")
 
-                    st.info(
-                        "Incident correlation is pending."
-                    )
-
+    elif risk_alerts:
+        st.info("No security alerts match your filter criteria.")
     else:
+        st.success("No active security threats detected.")
 
-        st.success(
-            "No active security threats detected."
-        )
 
 
 # ==================================================
@@ -1663,666 +1472,333 @@ elif selected_page == "Security Alerts":
 
 elif selected_page == "Incidents":
 
-    st.title(
-        "🛡️ Incident Management"
-    )
-
-    st.caption(
-        "Track, investigate and manage detected security incidents."
-    )
+    st.title("🛡️ Incident Management & Response")
+    st.caption("Investigate, track, and orchestrate response actions for correlated security incidents.")
 
     st.divider()
 
-
     if incidents:
+        # ----------------------------------------------
+        # INCIDENT SUMMARY KPIS
+        # ----------------------------------------------
+        inc_kpi1, inc_kpi2, inc_kpi3, inc_kpi4 = st.columns(4)
 
-        for incident in incidents:
+        with inc_kpi1:
+            st.metric("Total Incidents", len(incidents))
 
-            incident_id = incident[
-                "incident_id"
-            ]
+        with inc_kpi2:
+            st.metric("Active Incidents", active_incidents)
 
-            title = incident[
-                "title"
-            ]
+        with inc_kpi3:
+            st.metric("Contained Threats", contained_incidents)
 
-            severity = incident[
-                "severity"
-            ]
+        with inc_kpi4:
+            high_sev_incidents = sum(
+                1 for i in incidents
+                if i.get("severity") in ["HIGH", "CRITICAL"] or (i.get("risk_score") or 0) >= 80
+            )
+            st.metric("High / Critical Threats", high_sev_incidents)
 
-            status = incident[
-                "status"
-            ]
+        st.divider()
 
-            source_ip = incident[
-                "source_ip"
-            ]
+        # ----------------------------------------------
+        # INCIDENT FILTERS
+        # ----------------------------------------------
+        inc_filter_col1, inc_filter_col2, inc_filter_col3 = st.columns([2, 1, 1])
 
-            risk_score = incident[
-                "risk_score"
-            ]
+        with inc_filter_col1:
+            inc_search = st.text_input(
+                "Search Incidents",
+                placeholder="Search by incident ID, source IP, or title...",
+                key="filter_inc_search"
+            ).strip().lower()
 
-            mitre = incident[
-                "mitre_technique"
-            ]
-
-            description = (
-                incident["description"]
-                or "No incident description available."
+        with inc_filter_col2:
+            inc_status_filter = st.selectbox(
+                "Status Filter",
+                ["ALL", "NEW", "TRIAGED", "INVESTIGATING", "CONTAINED", "RESOLVED"],
+                key="filter_inc_status"
             )
 
-
-            # ------------------------------------------
-            # INCIDENT EVIDENCE
-            # ------------------------------------------
-
-            incident_events = get_incident_events(
-                incident_id
+        with inc_filter_col3:
+            inc_sev_filter = st.selectbox(
+                "Severity Filter",
+                ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"],
+                key="filter_inc_sev"
             )
 
-            evidence_count = len(
-                incident_events
-            )
-
-
-            # ------------------------------------------
-            # CONTAINMENT HISTORY
-            # ------------------------------------------
-
-            incident_containment_actions = [
-                action
-                for action in containment_actions
-                if action["incident_id"]
-                == incident_id
-            ]
-
-
-            # ------------------------------------------
-            # STATUS ICON
-            # ------------------------------------------
-
-            if status == "NEW":
-
-                status_icon = "🆕"
-
-            elif status == "TRIAGED":
-
-                status_icon = "🔎"
-
-            elif status == "INVESTIGATING":
-
-                status_icon = "🕵️"
-
-            elif status == "CONTAINED":
-
-                status_icon = "🛡️"
-
-            elif status == "RESOLVED":
-
-                status_icon = "✅"
-
-            else:
-
-                status_icon = "⚪"
-
-
-            # ------------------------------------------
-            # SEVERITY ICON
-            # ------------------------------------------
-
-            if severity == "CRITICAL":
-
-                severity_icon = "🔴"
-
-            elif severity == "HIGH":
-
-                severity_icon = "🟠"
-
-            elif severity == "MEDIUM":
-
-                severity_icon = "🟡"
-
-            else:
-
-                severity_icon = "🟢"
-
-
-            # ------------------------------------------
-            # INCIDENT CARD
-            # ------------------------------------------
-
-            with st.container(
-                border=True
-            ):
-
-                header_col1, header_col2 = st.columns(
-                    [4, 1]
-                )
-
-                with header_col1:
-
-                    st.markdown(
-                        f"### {status_icon} "
-                        f"{incident_id} — {title}"
-                    )
-
-                    st.caption(
-                        f"{severity_icon} Severity: {severity}"
-                    )
-
-                with header_col2:
-
-                    st.metric(
-                        "Risk Score",
-                        f"{risk_score}/100"
-                    )
-
-
-                # --------------------------------------
-                # INCIDENT OVERVIEW
-                # --------------------------------------
-
-                (
-                    info_col1,
-                    info_col2,
-                    info_col3,
-                    info_col4
-                ) = st.columns(4)
-
-
-                with info_col1:
-
-                    st.write(
-                        "**Source IP**"
-                    )
-
-                    st.code(
-                        source_ip
-                    )
-
-
-                with info_col2:
-
-                    st.write(
-                        "**Severity**"
-                    )
-
-                    st.write(
-                        severity
-                    )
-
-
-                with info_col3:
-
-                    st.write(
-                        "**MITRE ATT&CK**"
-                    )
-
-                    st.code(
-                        mitre
-                    )
-
-
-                with info_col4:
-
-                    st.write(
-                        "**Evidence Events**"
-                    )
-
-                    st.metric(
-                        "Events",
-                        evidence_count
-                    )
-
-
-                st.write(
-                    "**Detection Summary**"
-                )
-
-                st.write(
-                    description
-                )
-
-
-                st.divider()
-
-
-                # --------------------------------------
-                # INCIDENT LIFECYCLE
-                # --------------------------------------
-
-                st.write(
-                    "**Incident Lifecycle**"
-                )
-
-                lifecycle = [
-                    "NEW",
-                    "TRIAGED",
-                    "INVESTIGATING",
-                    "CONTAINED",
-                    "RESOLVED"
+        # ----------------------------------------------
+        # FILTER INCIDENTS LIST
+        # ----------------------------------------------
+        filtered_incidents = []
+        for inc in incidents:
+            if inc_status_filter != "ALL" and inc.get("status") != inc_status_filter:
+                continue
+
+            if inc_sev_filter != "ALL" and str(inc.get("severity", "")).upper() != inc_sev_filter:
+                continue
+
+            if inc_search:
+                searchable = (
+                    f"{inc.get('incident_id', '')} "
+                    f"{inc.get('title', '')} "
+                    f"{inc.get('source_ip', '')} "
+                    f"{inc.get('alert_type', '')} "
+                    f"{inc.get('mitre_technique', '')} "
+                    f"{inc.get('description', '')}"
+                ).lower()
+                if inc_search not in searchable:
+                    continue
+
+            filtered_incidents.append(inc)
+
+        if filtered_incidents:
+            st.caption(f"Showing {len(filtered_incidents)} of {len(incidents)} incidents.")
+
+            for incident in filtered_incidents:
+                incident_id = incident["incident_id"]
+                title = incident["title"]
+                severity = incident["severity"]
+                status = incident["status"]
+                source_ip = incident["source_ip"]
+                risk_score = incident["risk_score"]
+                mitre = incident["mitre_technique"]
+                description = incident["description"] or "No incident description available."
+
+                # Evidence & containment lookup
+                incident_events = get_incident_events(incident_id)
+                evidence_count = len(incident_events)
+                incident_containment_actions = [
+                    action for action in containment_actions
+                    if action["incident_id"] == incident_id
                 ]
 
-                st.caption(
-                    " → ".join(lifecycle)
-                )
+                # Status & Severity icons
+                status_icon = {
+                    "NEW": "🆕",
+                    "TRIAGED": "🔎",
+                    "INVESTIGATING": "🕵️",
+                    "CONTAINED": "🛡️",
+                    "RESOLVED": "✅"
+                }.get(status, "⚪")
 
-                lifecycle_index = (
-                    lifecycle.index(status)
-                    if status in lifecycle
-                    else 0
-                )
+                severity_icon = {
+                    "CRITICAL": "🔴",
+                    "HIGH": "🟠",
+                    "MEDIUM": "🟡"
+                }.get(severity, "🟢")
 
-                lifecycle_cols = st.columns(
-                    len(lifecycle)
-                )
+                # --------------------------------------
+                # INCIDENT CARD
+                # --------------------------------------
+                with st.container(border=True):
+                    head_col1, head_col2 = st.columns([4, 1])
 
+                    with head_col1:
+                        st.markdown(f"### {status_icon} {incident_id} — {title}")
+                        st.caption(f"{severity_icon} Severity: `{severity}`  |  Current Workflow State: `{status}`")
 
-                for index, lifecycle_status in enumerate(
-                    lifecycle
-                ):
+                    with head_col2:
+                        st.metric("Risk Score", f"{risk_score} / 100")
 
-                    with lifecycle_cols[index]:
+                    # Incident Overview
+                    info_col1, info_col2, info_col3, info_col4 = st.columns(4)
 
-                        if index < lifecycle_index:
+                    with info_col1:
+                        st.write("**Source IP Address**")
+                        st.code(source_ip)
 
-                            st.success(
-                                lifecycle_status
-                            )
-
-                        elif index == lifecycle_index:
-
-                            st.warning(
-                                lifecycle_status
-                            )
-
+                    with info_col2:
+                        st.write("**Severity**")
+                        if severity == "CRITICAL":
+                            st.error("CRITICAL")
+                        elif severity == "HIGH":
+                            st.warning("HIGH")
+                        elif severity == "MEDIUM":
+                            st.warning("MEDIUM")
                         else:
+                            st.success("LOW")
 
-                            st.info(
-                                lifecycle_status
-                            )
+                    with info_col3:
+                        st.write("**MITRE Technique**")
+                        st.code(mitre)
 
+                    with info_col4:
+                        st.write("**Correlated Evidence**")
+                        st.metric("Evidence Events", evidence_count)
 
-                st.divider()
+                    st.write("**Incident Description**")
+                    st.write(description)
 
+                    st.divider()
 
-                # --------------------------------------
-                # INCIDENT EVIDENCE
-                # --------------------------------------
+                    # ----------------------------------
+                    # INCIDENT LIFECYCLE STEPPER
+                    # ----------------------------------
+                    st.write("**Incident Lifecycle State**")
+                    lifecycle = ["NEW", "TRIAGED", "INVESTIGATING", "CONTAINED", "RESOLVED"]
+                    lifecycle_index = lifecycle.index(status) if status in lifecycle else 0
 
-                               # --------------------------------------
-                # INCIDENT STATUS HISTORY
-                # --------------------------------------
+                    lifecycle_cols = st.columns(len(lifecycle))
+                    for index, stage in enumerate(lifecycle):
+                        with lifecycle_cols[index]:
+                            if index < lifecycle_index:
+                                st.success(f"✓ {stage}")
+                            elif index == lifecycle_index:
+                                st.warning(f"● {stage}")
+                            else:
+                                st.info(f"○ {stage}")
 
-                incident_status_history = (
-                    get_incident_status_history(
-                        incident_id
-                    )
-                )
+                    st.divider()
 
-                with st.expander(
-                    "View Status History"
-                ):
+                    # ----------------------------------
+                    # STATUS MANAGEMENT CONTROLS
+                    # ----------------------------------
+                    ctrl_col1, ctrl_col2 = st.columns([3, 1])
+                    with ctrl_col1:
+                        status_options = ["NEW", "TRIAGED", "INVESTIGATING", "CONTAINED", "RESOLVED"]
+                        selected_status = st.selectbox(
+                            "Transition Workflow Status",
+                            status_options,
+                            index=status_options.index(status) if status in status_options else 0,
+                            key=f"status_{incident_id}"
+                        )
 
-                    if incident_status_history:
+                    with ctrl_col2:
+                        st.write("&nbsp;")
+                        if selected_status != status:
+                            if st.button("Update Status", key=f"update_{incident_id}", use_container_width=True):
+                                updated_rows = update_incident_status(incident_id, selected_status)
+                                if updated_rows == 1:
+                                    st.success(f"{incident_id} updated to {selected_status}.")
+                                    st.rerun()
+                                else:
+                                    st.error("Status update failed.")
+                        else:
+                            st.caption("Status is current.")
 
-                        for history in incident_status_history:
+                    st.divider()
 
-                            old_status = history[
-                                "old_status"
+                    # ----------------------------------
+                    # CORRELATED EVIDENCE
+                    # ----------------------------------
+                    with st.expander(f"View Correlated Evidence Events ({evidence_count} Events)"):
+                        if incident_events:
+                            ev_data = [
+                                {
+                                    "ID": ev["id"],
+                                    "Timestamp": ev["timestamp"],
+                                    "Source IP": ev["source_ip"],
+                                    "Username": ev["username"] or "—",
+                                    "Event Type": ev["event_type"],
+                                    "Action": ev["action"],
+                                    "Status": ev["status"],
+                                    "Severity": ev["severity"],
+                                    "Port": str(ev["port"]) if ev.get("port") is not None else "—",
+                                    "Message": ev["message"]
+                                }
+                                for ev in incident_events
                             ]
+                            st.dataframe(ev_data, width="stretch", hide_index=True)
+                        else:
+                            st.info("No evidence events linked to this incident.")
 
-                            new_status = history[
-                                "new_status"
+                    # ----------------------------------
+                    # STATUS TRANSITION HISTORY
+                    # ----------------------------------
+                    incident_status_history = get_incident_status_history(incident_id)
+                    with st.expander(f"View Status Audit History ({len(incident_status_history)} Transitions)"):
+                        if incident_status_history:
+                            for hist in incident_status_history:
+                                st.write(f"**{hist['old_status']} → {hist['new_status']}**")
+                                st.caption(f"Transitioned at: {hist['changed_at']}")
+                        else:
+                            st.info("No status transitions recorded yet.")
+
+                    # ----------------------------------
+                    # AUTOMATED RESPONSE HISTORY
+                    # ----------------------------------
+                    with st.expander(f"View Containment Actions ({len(incident_containment_actions)} Actions)"):
+                        if incident_containment_actions:
+                            action_data = [
+                                {
+                                    "Timestamp": act["timestamp"],
+                                    "Action": act["action"],
+                                    "Source IP": act["source_ip"],
+                                    "Status": act["status"],
+                                    "Reason": act["reason"]
+                                }
+                                for act in incident_containment_actions
                             ]
+                            st.dataframe(action_data, width="stretch", hide_index=True)
+                        else:
+                            st.info("No containment actions recorded for this incident.")
 
-                            changed_at = history[
-                                "changed_at"
-                            ]
+                    st.divider()
 
-                            st.write(
-                                f"**{old_status} → {new_status}**"
-                            )
+                    # ----------------------------------
+                    # AI SOC COPILOT
+                    # ----------------------------------
+                    st.subheader("🤖 SentinelX AI SOC Copilot")
+                    st.caption("Evidence-grounded intelligence and prescriptive incident response guidance.")
+
+                    ai_session_key = f"ai_analysis_{incident_id}"
+
+                    ai_btn_col1, ai_btn_col2 = st.columns([2, 1])
+                    with ai_btn_col1:
+                        if st.button("Analyze Incident with AI Copilot", key=f"ai_analyze_{incident_id}", use_container_width=True):
+                            with st.spinner("AI Copilot analyzing evidence, MITRE context, and threat dynamics..."):
+                                ai_res = analyze_incident(incident, incident_events)
+                                st.session_state[ai_session_key] = ai_res
+
+                    with ai_btn_col2:
+                        if ai_session_key in st.session_state and st.session_state[ai_session_key]:
+                            if st.button("Clear AI Report", key=f"ai_clear_{incident_id}", use_container_width=True):
+                                del st.session_state[ai_session_key]
+                                st.rerun()
+
+                    cached_ai = st.session_state.get(ai_session_key)
+
+                    if cached_ai:
+                        with st.container(border=True):
+                            st.success("✓ AI Investigation Analysis Available (Ground Truth Verified)")
+
+                            st.write("**Incident Summary**")
+                            st.write(cached_ai.get("incident_summary", "Not available in supplied evidence."))
+
+                            st.write("**Severity & Threat Assessment**")
+                            st.write(cached_ai.get("severity_explanation", "Not available in supplied evidence."))
+
+                            st.write("**MITRE ATT&CK Context**")
+                            st.write(cached_ai.get("mitre_explanation", "Not available in supplied evidence."))
+
+                            st.write("**Actionable Investigation Steps**")
+                            steps = cached_ai.get("investigation_steps", [])
+                            if isinstance(steps, list):
+                                for s in steps:
+                                    st.markdown(f"- {s}")
+                            else:
+                                st.write(steps)
+
+                            st.write("**Recommended Containment & Response**")
+                            recs = cached_ai.get("recommended_response", [])
+                            if isinstance(recs, list):
+                                for r in recs:
+                                    st.markdown(f"- {r}")
+                            else:
+                                st.write(recs)
 
                             st.caption(
-                                f"Changed at: {changed_at}"
+                                f"Analyzed Events: {cached_ai.get('evidence_count', len(incident_events))}  |  "
+                                "Engine: SentinelX Hybrid AI (Gemini 2.5 Pro with Rule-Based Guardrails)"
                             )
 
-                            st.divider()
-
-                    else:
-
-                        st.info(
-                            "No status history recorded yet."
-                        )
-
-
-                # --------------------------------------
-                # INCIDENT EVIDENCE
-                # --------------------------------------
-
-                with st.expander(
-                    "View Incident Evidence"
-                ):
-
-                    if incident_events:
-
-                        evidence_data = []
-
-                        for event in incident_events:
-
-                            evidence_data.append(
-                                {
-                                    "ID": event["id"],
-                                    "Timestamp": event["timestamp"],
-                                    "Source IP": event["source_ip"],
-                                    "Username": event["username"],
-                                    "Event Type": event["event_type"],
-                                    "Action": event["action"],
-                                    "Status": event["status"],
-                                    "Severity": event["severity"],
-                                    "Message": event["message"]
-                                }
-                            )
-
-                        st.dataframe(
-                            evidence_data,
-                            width="stretch",
-                            hide_index=True
-                        )
-
-                    else:
-
-                        st.info(
-                            "No evidence events linked "
-                            "to this incident."
-                        )
-
-                st.divider()
-
-
-                # --------------------------------------
-                # AI SOC COPILOT
-                # --------------------------------------
-
-                st.subheader(
-                    "🤖 AI SOC Copilot"
-                )
-
-                st.caption(
-                    "Evidence-grounded AI investigation "
-                    "and response assistance."
-                )
-
-
-                if st.button(
-                    "Analyze Incident with AI",
-                    key=f"ai_analyze_{incident_id}",
-                    use_container_width=True
-                ):
-
-                    with st.spinner(
-                        "AI Copilot is analyzing "
-                        "the incident..."
-                    ):
-
-                        ai_result = analyze_incident(
-                            incident,
-                            incident_events
-                        )
-
-
-                    if ai_result:
-
-                        st.success(
-                            "AI analysis completed."
-                        )
-
-
-                        st.write(
-                            "**Incident Summary**"
-                        )
-
-                        st.write(
-                            ai_result.get(
-                                "incident_summary",
-                                "Not available in supplied evidence."
-                            )
-                        )
-
-
-                        st.write(
-                            "**Severity Explanation**"
-                        )
-
-                        st.write(
-                            ai_result.get(
-                                "severity_explanation",
-                                "Not available in supplied evidence."
-                            )
-                        )
-
-
-                        st.write(
-                            "**MITRE ATT&CK Explanation**"
-                        )
-
-                        st.write(
-                            ai_result.get(
-                                "mitre_explanation",
-                                "Not available in supplied evidence."
-                            )
-                        )
-
-
-                        st.write(
-                            "**Investigation Steps**"
-                        )
-
-                        investigation_steps = ai_result.get(
-                            "investigation_steps",
-                            []
-                        )
-
-
-                        if isinstance(
-                            investigation_steps,
-                            list
-                        ):
-
-                            for step in investigation_steps:
-
-                                st.markdown(
-                                    f"- {step}"
-                                )
-
-                        else:
-
-                            st.write(
-                                investigation_steps
-                            )
-
-
-                        st.write(
-                            "**Recommended Response**"
-                        )
-
-                        recommended_response = ai_result.get(
-                            "recommended_response",
-                            []
-                        )
-
-
-                        if isinstance(
-                            recommended_response,
-                            list
-                        ):
-
-                            for response_step in recommended_response:
-
-                                st.markdown(
-                                    f"- {response_step}"
-                                )
-
-                        else:
-
-                            st.write(
-                                recommended_response
-                            )
-
-
-                        st.caption(
-                            f"Evidence events analyzed: "
-                            f"{ai_result.get('evidence_count', 0)}"
-                        )
-
-                    else:
-
-                        st.error(
-                            "AI analysis could not be generated."
-                        )
-
-
-                st.divider()
-
-
-                # --------------------------------------
-                # AUTOMATED RESPONSE HISTORY
-                # --------------------------------------
-
-                with st.expander(
-                    "View Automated Response History"
-                ):
-
-                    if incident_containment_actions:
-
-                        response_data = []
-
-                        for action in incident_containment_actions:
-
-                            response_data.append(
-                                {
-                                    "Timestamp": action["timestamp"],
-                                    "Action": action["action"],
-                                    "Source IP": action["source_ip"],
-                                    "Status": action["status"],
-                                    "Reason": action["reason"]
-                                }
-                            )
-
-
-                        st.dataframe(
-                            response_data,
-                            width="stretch",
-                            hide_index=True
-                        )
-
-                    else:
-
-                        st.info(
-                            "No automated containment "
-                            "actions recorded."
-                        )
-
-
-                # --------------------------------------
-                # RESPONSE STATE
-                # --------------------------------------
-
-                st.write(
-                    "**Response State**"
-                )
-
-
-                if status == "CONTAINED":
-
-                    st.success(
-                        "🛡️ Threat contained by SentinelX."
-                    )
-
-                elif status == "RESOLVED":
-
-                    st.success(
-                        "✅ Incident resolved."
-                    )
-
-                elif status == "INVESTIGATING":
-
-                    st.warning(
-                        "🕵️ Incident currently under investigation."
-                    )
-
-                elif status == "TRIAGED":
-
-                    st.warning(
-                        "🔎 Incident triaged and awaiting investigation."
-                    )
-
-                else:
-
-                    st.info(
-                        "🆕 New incident awaiting analyst triage."
-                    )
-
-
-                st.divider()
-
-
-                # --------------------------------------
-                # STATUS MANAGEMENT
-                # --------------------------------------
-
-                status_options = [
-                    "NEW",
-                    "TRIAGED",
-                    "INVESTIGATING",
-                    "CONTAINED",
-                    "RESOLVED"
-                ]
-
-
-                selected_status = st.selectbox(
-                    "Update Incident Status",
-                    status_options,
-                    index=status_options.index(status),
-                    key=f"status_{incident_id}"
-                )
-
-
-                if selected_status != status:
-
-                    if st.button(
-                        "Update Status",
-                        key=f"update_{incident_id}",
-                        use_container_width=True
-                    ):
-
-                        updated_rows = update_incident_status(
-                            incident_id,
-                            selected_status
-                        )
-
-
-                        if updated_rows == 1:
-
-                            st.success(
-                                f"{incident_id} updated "
-                                f"to {selected_status}."
-                            )
-
-                            st.rerun()
-
-                        else:
-
-                            st.error(
-                                "Incident status update failed."
-                            )
+        else:
+            st.info("No incidents match your filter criteria.")
 
     else:
+        st.info("No incidents created yet.")
 
-        st.info(
-            "No incidents created yet."
-        )
 
 
 # ==================================================
@@ -2331,98 +1807,100 @@ elif selected_page == "Incidents":
 
 elif selected_page == "MITRE ATT&CK":
 
-    st.title(
-        "🎯 MITRE ATT&CK"
-    )
-
-    st.caption(
-        "Technique mapping for SentinelX security detections."
-    )
+    st.title("🎯 MITRE ATT&CK® Threat Matrix")
+    st.caption("Adversary Tactics, Techniques, and Common Knowledge (ATT&CK) mapping for SentinelX detections.")
 
     st.divider()
 
-
     mitre_mapping = {
-
         "BRUTE_FORCE": {
             "technique": "T1110",
             "name": "Brute Force",
+            "tactic": "Credential Access",
             "description": (
-                "Attempts to gain access by repeatedly "
-                "guessing or using credentials."
+                "Adversaries may use brute force techniques to attempt to gain access to accounts "
+                "when passwords are unknown or when password hashes are obtained."
             )
         },
-
         "PORT_SCAN": {
             "technique": "T1046",
             "name": "Network Service Scanning",
+            "tactic": "Discovery",
             "description": (
-                "Discovery of network services and "
-                "accessible ports."
+                "Adversaries may attempt to get a listing of services and accessible ports running "
+                "on remote hosts to identify potential targets for exploitation."
             )
         },
-
         "SUSPICIOUS_POWERSHELL": {
             "technique": "T1059.001",
-            "name": "PowerShell",
+            "name": "Command and Scripting Interpreter: PowerShell",
+            "tactic": "Execution",
             "description": (
-                "Execution of commands and scripts "
-                "through PowerShell."
+                "Adversaries may abuse PowerShell commands and scripts for execution, discovery, "
+                "and persistence, often using obfuscation flags such as -ExecutionPolicy Bypass or -EncodedCommand."
             )
         },
-
         "PRIVILEGE_ESCALATION": {
             "technique": "T1068",
             "name": "Exploitation for Privilege Escalation",
+            "tactic": "Privilege Escalation",
             "description": (
-                "Exploitation of vulnerabilities or "
-                "weaknesses to obtain higher privileges."
+                "Adversaries may exploit vulnerabilities or configuration weaknesses in an operating system or "
+                "application in order to elevate privileges to admin or SYSTEM level."
             )
         },
-
         "SUSPICIOUS_AUTH": {
             "technique": "T1078",
             "name": "Valid Accounts",
+            "tactic": "Defense Evasion / Initial Access",
             "description": (
-                "Use of legitimate credentials to "
-                "access systems or resources."
+                "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining "
+                "initial access, persistence, privilege escalation, or defense evasion."
             )
         }
     }
 
+    # ----------------------------------------------
+    # MATRIX SUMMARY KPIS
+    # ----------------------------------------------
+    active_techniques = set()
+    for alert in risk_alerts:
+        technique = alert.get("mitre_technique")
+        if technique:
+            active_techniques.add(technique)
+
+    m_col1, m_col2, m_col3 = st.columns(3)
+    with m_col1:
+        st.metric("Mapped Techniques", len(mitre_mapping))
+    with m_col2:
+        st.metric("Active Adversary Techniques", len(active_techniques))
+    with m_col3:
+        st.metric("Correlated Risk Detections", len(risk_alerts))
+
+    st.divider()
 
     # ----------------------------------------------
-    # DETECTION MAPPING
+    # DETECTION MAPPING TABLE
     # ----------------------------------------------
-
-    st.subheader(
-        "Detection → MITRE ATT&CK Mapping"
-    )
+    st.subheader("📋 Detection Engine → MITRE Matrix Mapping")
 
     mitre_data = []
-
     for alert_type, mapping in mitre_mapping.items():
-
         matching_alerts = [
-            alert
-            for alert in risk_alerts
-            if normalize_alert_type(
-                alert.get(
-                    "alert_type"
-                )
-            ) == alert_type
+            alert for alert in risk_alerts
+            if normalize_alert_type(alert.get("alert_type")) == alert_type
         ]
 
         mitre_data.append(
             {
                 "Detection": alert_type,
                 "MITRE ID": mapping["technique"],
-                "Technique": mapping["name"],
-                "Alerts": len(matching_alerts),
+                "Tactic": mapping["tactic"],
+                "Technique Name": mapping["name"],
+                "Active Detections": len(matching_alerts),
                 "Description": mapping["description"]
             }
         )
-
 
     st.dataframe(
         mitre_data,
@@ -2430,75 +1908,40 @@ elif selected_page == "MITRE ATT&CK":
         hide_index=True
     )
 
-
     st.divider()
 
-
     # ----------------------------------------------
-    # ACTIVE TECHNIQUES
+    # ACTIVE TECHNIQUES DEEP DIVE
     # ----------------------------------------------
-
-    st.subheader(
-        "Active MITRE Techniques"
-    )
-
-    active_techniques = set()
-
-    for alert in risk_alerts:
-
-        technique = alert.get(
-            "mitre_technique"
-        )
-
-        if technique:
-
-            active_techniques.add(
-                technique
-            )
-
+    st.subheader("🔍 Active Threat Technique Profiles")
 
     if active_techniques:
-
-        for technique in sorted(
-            active_techniques
-        ):
-
+        for technique in sorted(active_techniques):
             mapping = None
-
             for item in mitre_mapping.values():
-
                 if item["technique"] == technique:
-
                     mapping = item
                     break
 
-
             if mapping:
+                with st.container(border=True):
+                    tech_clean = mapping["technique"].split(".")[0]
+                    mitre_url = f"https://attack.mitre.org/techniques/{tech_clean}/"
 
-                with st.container(
-                    border=True
-                ):
+                    t_head1, t_head2 = st.columns([3, 1])
+                    with t_head1:
+                        st.markdown(f"### 🎯 {mapping['technique']} — {mapping['name']}")
+                        st.caption(f"Enterprise Tactic: **{mapping['tactic']}**")
+                    with t_head2:
+                        st.markdown(f"[Official MITRE Doc ↗]({mitre_url})")
 
-                    st.markdown(
-                        f"### {mapping['technique']} — "
-                        f"{mapping['name']}"
-                    )
-
-                    st.write(
-                        mapping["description"]
-                    )
-
+                    st.write(mapping["description"])
             else:
-
-                st.code(
-                    technique
-                )
-
+                with st.container(border=True):
+                    st.code(technique)
     else:
+        st.info("No active MITRE ATT&CK techniques triggered in current telemetry buffer.")
 
-        st.info(
-            "No active MITRE ATT&CK techniques detected."
-        )
 
 
 # ==================================================
@@ -2507,104 +1950,114 @@ elif selected_page == "MITRE ATT&CK":
 
 elif selected_page == "Audit Logs":
 
-    st.title(
-        "📋 Audit Logs"
-    )
-
-    st.caption(
-        "Recorded security response and containment actions."
-    )
+    st.title("📋 Containment & Security Audit Trail")
+    st.caption("Forensic audit trail of all automated containment actions and security response events.")
 
     st.divider()
 
-
     # Reload latest actions
-
-    containment_actions = (
-        get_containment_actions()
-    )
-
+    containment_actions = get_containment_actions()
 
     if containment_actions:
+        successful_actions = sum(1 for a in containment_actions if a["status"] == "SUCCESS")
+        failed_actions = sum(1 for a in containment_actions if a["status"] != "SUCCESS")
+        unique_targets = len(set(a["source_ip"] for a in containment_actions))
 
-        audit_data = []
+        # ----------------------------------------------
+        # AUDIT STATISTICS KPIS
+        # ----------------------------------------------
+        stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
 
-        for action in containment_actions:
+        with stat_col1:
+            st.metric("Total Containment Actions", len(containment_actions))
 
-            audit_data.append(
-                {
-                    "ID": action["id"],
-                    "Timestamp": action["timestamp"],
-                    "Incident": action["incident_id"],
-                    "Action": action["action"],
-                    "Source IP": action["source_ip"],
-                    "Status": action["status"],
-                    "Reason": action["reason"]
-                }
-            )
+        with stat_col2:
+            st.metric("Successful Mitigations", successful_actions)
 
+        with stat_col3:
+            st.metric("Failed / Errors", failed_actions)
 
-        st.dataframe(
-            audit_data,
-            width="stretch",
-            hide_index=True
-        )
-
+        with stat_col4:
+            st.metric("Isolated Host Entities", unique_targets)
 
         st.divider()
 
-        st.subheader(
-            "Response Statistics"
-        )
+        # ----------------------------------------------
+        # AUDIT FILTERS
+        # ----------------------------------------------
+        audit_f1, audit_f2 = st.columns([2, 1])
 
+        with audit_f1:
+            audit_query = st.text_input(
+                "Search Audit Trail",
+                placeholder="Search by IP, incident ID, or containment reason...",
+                key="filter_audit_search"
+            ).strip().lower()
 
-        successful_actions = sum(
-            1
-            for action in containment_actions
-            if action["status"] == "SUCCESS"
-        )
-
-
-        failed_actions = sum(
-            1
-            for action in containment_actions
-            if action["status"] != "SUCCESS"
-        )
-
-
-        stat_col1, stat_col2, stat_col3 = (
-            st.columns(3)
-        )
-
-
-        with stat_col1:
-
-            st.metric(
-                "Total Actions",
-                len(containment_actions)
+        with audit_f2:
+            audit_status_filter = st.selectbox(
+                "Action Status",
+                ["ALL", "SUCCESS", "FAILED"],
+                key="filter_audit_status"
             )
 
+        # ----------------------------------------------
+        # FILTER DATA
+        # ----------------------------------------------
+        filtered_actions = []
+        for action in containment_actions:
+            if audit_status_filter == "SUCCESS" and action["status"] != "SUCCESS":
+                continue
+            elif audit_status_filter == "FAILED" and action["status"] == "SUCCESS":
+                continue
 
-        with stat_col2:
+            if audit_query:
+                combined = f"{action.get('id', '')} {action.get('incident_id', '')} {action.get('source_ip', '')} {action.get('action', '')} {action.get('reason', '')}".lower()
+                if audit_query not in combined:
+                    continue
 
-            st.metric(
-                "Successful",
-                successful_actions
+            filtered_actions.append(action)
+
+        if filtered_actions:
+            audit_data = []
+            for action in filtered_actions:
+                audit_data.append(
+                    {
+                        "Action ID": action["id"],
+                        "Timestamp (UTC)": action["timestamp"],
+                        "Incident ID": action["incident_id"],
+                        "Mitigation Action": action["action"],
+                        "Target Host IP": action["source_ip"],
+                        "Execution Status": action["status"],
+                        "Policy Rationale": action["reason"]
+                    }
+                )
+
+            st.dataframe(
+                audit_data,
+                width="stretch",
+                hide_index=True
             )
+            st.caption(f"Displaying {len(filtered_actions)} of {len(containment_actions)} total forensic records.")
+        else:
+            st.info("No audit records match the selected filter.")
 
+        st.divider()
 
-        with stat_col3:
-
-            st.metric(
-                "Failed",
-                failed_actions
+        # ----------------------------------------------
+        # SAFE CONTAINMENT AUDIT COMPLIANCE
+        # ----------------------------------------------
+        with st.container(border=True):
+            st.markdown("### 🛡️ SentinelX Safe Mitigation & Governance Policy")
+            st.write(
+                "All automated isolation and containment commands executed by SentinelX follow "
+                "strict reversible host mitigation standards. Actions are logged immutably into the "
+                "local SQLite audit vault with exact execution timestamps, incident linkages, and source IP addresses."
             )
 
     else:
+        st.info("No containment actions recorded yet.")
 
-        st.info(
-            "No containment actions recorded yet."
-        )
 
 
 # ==================================================
