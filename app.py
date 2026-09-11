@@ -123,8 +123,8 @@ st.markdown(
         margin: 16px 0 !important;
     }
 
-    /* Top Command Header */
-    .sx-top-nav-header {
+    /* Top Command Header & Brand Lockup */
+    .sx-top-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -134,42 +134,222 @@ st.markdown(
         border-radius: 8px;
         background: #101B2B !important;
         border: 1px solid #1E3148 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     }
 
-    .sx-top-nav-kicker {
-        color: #38BDF8 !important;
-        font-size: 0.68rem;
+    .sx-brand-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .sx-brand-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .sx-brand-title {
+        font-size: 1.40rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #F8FAFC;
+        line-height: 1.1;
+    }
+
+    .sx-brand-sub {
+        font-size: 0.65rem;
         font-weight: 700;
-        letter-spacing: 1.2px;
+        letter-spacing: 1.4px;
+        color: #94A3B8;
         text-transform: uppercase;
     }
 
-    .sx-top-nav-title {
-        color: #F1F5F9;
-        font-size: 1.05rem;
-        font-weight: 800;
-        letter-spacing: 0.3px;
-        margin-top: 2px;
-    }
-
-    .sx-top-nav-live {
+    .sx-chips-row {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #10B981 !important;
-        font-size: 0.70rem;
+        margin-top: 4px;
+        flex-wrap: wrap;
+    }
+
+    .sx-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.62rem;
         font-weight: 700;
         letter-spacing: 0.8px;
+        text-transform: uppercase;
+    }
+
+    .sx-chip-green {
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #10B981;
+    }
+
+    .sx-chip-indigo {
+        background: rgba(99, 102, 241, 0.12);
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        color: #818CF8;
+    }
+
+    .sx-chip-cyan {
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        color: #38BDF8;
+    }
+
+    .sx-chip-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .sx-dot-green { background: #10B981; }
+    .sx-dot-indigo { background: #818CF8; }
+    .sx-dot-cyan { background: #38BDF8; }
+
+    .sx-top-status-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        text-align: right;
+    }
+
+    .sx-live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #10B981;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.9px;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        padding: 3px 10px;
+        border-radius: 4px;
+    }
+
+    /* Enterprise Custom KPI Cards */
+    .sx-kpi-card {
+        background: #101B2B;
+        border: 1px solid #1E3148;
+        border-radius: 8px;
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 110px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .sx-kpi-card:hover {
+        border-color: #2D486B;
+    }
+
+    .sx-kpi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 6px;
+    }
+
+    .sx-kpi-label {
+        color: #94A3B8;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
+    .sx-kpi-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sx-kpi-value {
+        font-size: 1.95rem;
+        font-weight: 800;
+        line-height: 1.1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        margin: 2px 0;
+    }
+
+    .sx-kpi-meta {
+        color: #64748B;
+        font-size: 0.70rem;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Visual SOC Pipeline Flow */
+    .sx-pipeline-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .sx-pipe-box {
+        flex: 1;
+        min-width: 88px;
+        background: #152336;
+        border: 1px solid #1E3148;
+        border-radius: 6px;
+        padding: 8px 6px;
+        text-align: center;
+        transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .sx-pipe-box:hover {
+        border-color: #38BDF8;
+        background: #1B2C42;
+    }
+
+    .sx-pipe-step {
+        font-size: 0.60rem;
+        font-weight: 800;
+        color: #38BDF8;
+        font-family: ui-monospace, monospace;
+        letter-spacing: 0.5px;
+    }
+
+    .sx-pipe-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #F1F5F9;
+        margin: 2px 0;
         white-space: nowrap;
     }
 
-    .sx-top-live-dot {
-        width: 8px;
-        height: 8px;
-        background: #10B981;
-        border-radius: 50%;
-        display: inline-block;
+    .sx-pipe-sub {
+        font-size: 0.58rem;
+        color: #64748B;
+        white-space: nowrap;
+    }
+
+    .sx-pipe-arrow {
+        color: #38BDF8;
+        font-size: 0.70rem;
+        font-weight: 700;
+        opacity: 0.6;
+        user-select: none;
+        padding: 0 1px;
     }
 
     /* Solid Enterprise Panels */
@@ -490,14 +670,34 @@ selected_page = st.session_state.selected_page
 
 st.markdown(
     """
-    <div class="sx-top-nav-header">
-        <div>
-            <div class="sx-top-nav-kicker">SENTINELX • AUTONOMOUS SECURITY OPERATIONS COMMAND</div>
-            <div class="sx-top-nav-title">SECURITY OPERATIONS COMMAND CONSOLE</div>
+    <div class="sx-top-header">
+        <div class="sx-brand-wrapper">
+            <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+                <path d="M24 4L8 10V22C8 32.5 14.8 42.1 24 44.5C33.2 42.1 40 32.5 40 22V10L24 4Z" stroke="#38BDF8" stroke-width="2.2" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.08)"/>
+                <path d="M24 8L12 13V22C12 29.8 16.8 37 24 39.5C31.2 37 36 29.8 36 22V13L24 8Z" stroke="rgba(99, 102, 241, 0.45)" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
+                <path d="M17 18L31 30M31 18L17 30" stroke="#38BDF8" stroke-width="2.6" stroke-linecap="round"/>
+                <circle cx="24" cy="24" r="3" fill="#38BDF8" stroke="#0A111C" stroke-width="1.5"/>
+            </svg>
+            <div class="sx-brand-text">
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                    <span class="sx-brand-title">SENTINEL<span style="color:#38BDF8;">X</span></span>
+                    <span class="sx-brand-sub">AUTONOMOUS SECURITY OPERATIONS CENTER</span>
+                </div>
+                <div class="sx-chips-row">
+                    <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
+                    <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
+                    <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>CONTAINMENT READY</span>
+                </div>
+            </div>
         </div>
-        <div class="sx-top-nav-live">
-            <span class="sx-top-live-dot"></span>
-            SOC SYSTEM OPERATIONAL
+        <div class="sx-top-status-right">
+            <div class="sx-live-badge">
+                <span class="sx-chip-dot sx-dot-green"></span>
+                TELEMETRY STREAM ACTIVE
+            </div>
+            <div style="color:#64748B; font-size:0.70rem; font-family:ui-monospace, monospace; letter-spacing:0.5px; margin-top:2px;">
+                HYBRID AGENT • SQLITE WAL ENGINE
+            </div>
         </div>
     </div>
     """,
@@ -970,29 +1170,32 @@ if selected_page == "Dashboard":
 
     st.markdown(
         """
-        <div class="sx-panel" style="margin-bottom: 1.25rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+        <div class="sx-panel" style="margin-bottom: 1.25rem; border-left: 3px solid #38BDF8;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <div>
-                    <div class="sx-top-nav-kicker">SENTINELX • AUTONOMOUS SECURITY OPERATIONS COMMAND</div>
-                    <div style="font-size:1.6rem; font-weight:800; color:#F4F8FC; margin-top:3px; letter-spacing:-0.4px;">
+                    <div style="color:#38BDF8; font-size:0.72rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;">
+                        DEFENSIVE TELEMETRY & THREAT ORCHESTRATION PLATFORM
+                    </div>
+                    <div style="font-size:1.65rem; font-weight:800; color:#F1F5F9; margin-top:2px; letter-spacing:-0.5px;">
                         Enterprise Threat Telemetry & Incident Intelligence
                     </div>
-                    <div style="color:#8FA3B8; font-size:0.86rem; margin-top:3px;">
+                    <div style="color:#94A3B8; font-size:0.84rem; margin-top:4px;">
                         Continuous Ingestion • Rule-Engine Correlation • Risk Prioritization • Automated Containment
                     </div>
                 </div>
-                <div style="text-align:right;">
-                    <span class="sx-top-live-dot" style="margin-right:6px;"></span>
-                    <span style="color:#3DDB9A; font-weight:800; font-size:0.78rem; letter-spacing:1px;">SOC SUBSYSTEMS ONLINE</span>
-                    <div style="color:#8FA3B8; font-size:0.78rem; margin-top:2px;">AI Investigation Copilot Ready</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:8px 14px; text-align:right;">
+                        <div style="color:#64748B; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;">SYSTEM STATUS</div>
+                        <div style="color:#10B981; font-weight:800; font-size:0.82rem; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+                            <span class="sx-chip-dot sx-dot-green"></span> ALL DEFENSES NOMINAL
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
-    st.divider()
 
     # ----------------------------------------------
     # TOP SOC METRICS
@@ -1001,62 +1204,241 @@ if selected_page == "Dashboard":
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric(
-            "Security Events Ingested",
-            total_events
+        st.markdown(
+            f"""
+            <div class="sx-kpi-card">
+                <div class="sx-kpi-header">
+                    <span class="sx-kpi-label">Security Events</span>
+                    <div class="sx-kpi-icon" style="background:rgba(56, 189, 248, 0.12); color:#38BDF8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="sx-kpi-value" style="color:#F1F5F9;">{total_events}</div>
+                <div class="sx-kpi-meta">
+                    <span class="sx-chip-dot sx-dot-cyan"></span> Telemetry stream online
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     with col2:
-        st.metric(
-            "High & Critical Alerts",
-            high_alerts
+        alert_accent = "#F97316" if high_alerts > 0 else "#38BDF8"
+        alert_bg = "rgba(249, 115, 22, 0.12)" if high_alerts > 0 else "rgba(56, 189, 248, 0.12)"
+        st.markdown(
+            f"""
+            <div class="sx-kpi-card">
+                <div class="sx-kpi-header">
+                    <span class="sx-kpi-label">High & Critical Alerts</span>
+                    <div class="sx-kpi-icon" style="background:{alert_bg}; color:{alert_accent};">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="sx-kpi-value" style="color:{alert_accent};">{high_alerts}</div>
+                <div class="sx-kpi-meta">
+                    <span class="sx-chip-dot" style="background:{alert_accent};"></span> Risk score ≥ 70 or Critical
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     with col3:
-        st.metric(
-            "Active Threats / Incidents",
-            active_incidents
+        threat_accent = "#EF4444" if active_incidents > 0 else "#10B981"
+        threat_bg = "rgba(239, 68, 68, 0.12)" if active_incidents > 0 else "rgba(16, 185, 129, 0.12)"
+        st.markdown(
+            f"""
+            <div class="sx-kpi-card">
+                <div class="sx-kpi-header">
+                    <span class="sx-kpi-label">Active Incidents</span>
+                    <div class="sx-kpi-icon" style="background:{threat_bg}; color:{threat_accent};">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="22" y1="12" x2="18" y2="12"/>
+                            <line x1="6" y1="12" x2="2" y2="12"/>
+                            <line x1="12" y1="6" x2="12" y2="2"/>
+                            <line x1="12" y1="22" x2="12" y2="18"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="sx-kpi-value" style="color:{threat_accent};">{active_incidents}</div>
+                <div class="sx-kpi-meta">
+                    <span class="sx-chip-dot" style="background:{threat_accent};"></span> Requiring triage or response
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     with col4:
-        st.metric(
-            "Contained Threats",
-            contained_incidents
+        st.markdown(
+            f"""
+            <div class="sx-kpi-card">
+                <div class="sx-kpi-header">
+                    <span class="sx-kpi-label">Contained Threats</span>
+                    <div class="sx-kpi-icon" style="background:rgba(16, 185, 129, 0.12); color:#10B981;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="sx-kpi-value" style="color:#10B981;">{contained_incidents}</div>
+                <div class="sx-kpi-meta">
+                    <span class="sx-chip-dot sx-dot-green"></span> Isolated via host containment
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
+
+    # ----------------------------------------------
+    # SOC DETECTION & RESPONSE PIPELINE
+    # ----------------------------------------------
+
+    st.markdown(
+        """
+        <div class="sx-panel" style="margin-top: 1.1rem; margin-bottom: 1.1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="font-size:0.84rem; font-weight:700; color:#F1F5F9; letter-spacing:0.5px;">
+                    ⚡ AUTONOMOUS SOC DETECTION & RESPONSE PIPELINE
+                </div>
+                <div style="font-size:0.70rem; color:#64748B; font-weight:600;">
+                    END-TO-END THREAT CORRELATION LIFECYCLE
+                </div>
+            </div>
+            <div class="sx-pipeline-row">
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">01</div>
+                    <div class="sx-pipe-title">Telemetry</div>
+                    <div class="sx-pipe-sub">Host & Ingest</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">02</div>
+                    <div class="sx-pipe-title">Detection</div>
+                    <div class="sx-pipe-sub">5 Engine Rules</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">03</div>
+                    <div class="sx-pipe-title">Risk Engine</div>
+                    <div class="sx-pipe-sub">0-100 Scoring</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">04</div>
+                    <div class="sx-pipe-title">Security Alert</div>
+                    <div class="sx-pipe-sub">Triage Prioritized</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">05</div>
+                    <div class="sx-pipe-title">Incident</div>
+                    <div class="sx-pipe-sub">Correlation Hub</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">06</div>
+                    <div class="sx-pipe-title">Evidence</div>
+                    <div class="sx-pipe-sub">Exact Event Links</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">07</div>
+                    <div class="sx-pipe-title">MITRE ATT&CK</div>
+                    <div class="sx-pipe-sub">Adversary TTPs</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">08</div>
+                    <div class="sx-pipe-title">Containment</div>
+                    <div class="sx-pipe-sub">Safe Isolation</div>
+                </div>
+                <div class="sx-pipe-arrow">➔</div>
+                <div class="sx-pipe-box">
+                    <div class="sx-pipe-step">09</div>
+                    <div class="sx-pipe-title">Audit Trail</div>
+                    <div class="sx-pipe-sub">Forensic Ledger</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # ----------------------------------------------
     # SECURITY POSTURE
     # ----------------------------------------------
 
-    st.divider()
-
     st.subheader("🛡️ Enterprise Security Posture")
 
-    posture_col1, posture_col2 = st.columns([1, 3])
+    if posture_label in ["EXCELLENT", "GOOD"]:
+        posture_badge_color = "#10B981"
+        posture_bg = "rgba(16, 185, 129, 0.12)"
+        posture_border = "rgba(16, 185, 129, 0.35)"
+        posture_desc = "Systems stable under current threat load. Defenses active."
+    elif posture_label in ["MODERATE", "POOR"]:
+        posture_badge_color = "#F97316"
+        posture_bg = "rgba(249, 115, 22, 0.12)"
+        posture_border = "rgba(249, 115, 22, 0.35)"
+        posture_desc = "Elevated threat volume. Active investigation and containment recommended."
+    else:
+        posture_badge_color = "#EF4444"
+        posture_bg = "rgba(239, 68, 68, 0.12)"
+        posture_border = "rgba(239, 68, 68, 0.35)"
+        posture_desc = "Critical threat threshold breached. Immediate host isolation required."
 
-    with posture_col1:
-        st.metric(
-            "Posture Score",
-            f"{posture_score} / 100"
-        )
+    posture_html = f"""
+    <div class="sx-panel" style="margin-bottom: 0.8rem; border: 1px solid {posture_border}; background: #101B2B;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; align-items:center; gap:18px;">
+                <div style="text-align:center; padding:10px 18px; background:#152336; border:1px solid #1E3148; border-radius:6px;">
+                    <div style="color:#94A3B8; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;">POSTURE SCORE</div>
+                    <div style="font-size:2rem; font-weight:900; color:#F1F5F9; font-family:ui-monospace, monospace; line-height:1.1; margin-top:2px;">
+                        {posture_score}<span style="font-size:0.9rem; color:#64748B;">/100</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="display:inline-block; padding:3px 10px; border-radius:4px; font-size:0.75rem; font-weight:800; letter-spacing:0.8px; background:{posture_bg}; color:{posture_badge_color}; border:1px solid {posture_border};">
+                        STATUS: {posture_label}
+                    </div>
+                    <div style="color:#94A3B8; font-size:0.84rem; margin-top:6px;">
+                        {posture_desc}
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
+                    <div style="color:#64748B; font-size:0.62rem; font-weight:700;">ACTIVE</div>
+                    <div style="color:#F1F5F9; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['active_incidents']}</div>
+                </div>
+                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
+                    <div style="color:#F97316; font-size:0.62rem; font-weight:700;">HIGH/CRIT</div>
+                    <div style="color:#F97316; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['high_critical_incidents']}</div>
+                </div>
+                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
+                    <div style="color:#10B981; font-size:0.62rem; font-weight:700;">CONTAINED</div>
+                    <div style="color:#10B981; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['contained_incidents']}</div>
+                </div>
+                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
+                    <div style="color:#38BDF8; font-size:0.62rem; font-weight:700;">RESOLVED</div>
+                    <div style="color:#38BDF8; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['resolved_incidents']}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown(posture_html, unsafe_allow_html=True)
 
-    with posture_col2:
-        if posture_label in ["EXCELLENT", "GOOD"]:
-            st.success(f"Security Posture: {posture_label} — Systems stable under current threat load")
-        elif posture_label in ["MODERATE", "POOR"]:
-            st.warning(f"Security Posture: {posture_label} — Active investigation and containment recommended")
-        else:
-            st.error(f"Security Posture: {posture_label} — Critical threat threshold breached")
-
-        norm_score = max(0.0, min(1.0, float(posture_score) / 100.0))
-        st.progress(norm_score)
-
-    st.caption(
-        f"Active threats: {posture['details']['active_incidents']}  |  "
-        f"High/Critical active: {posture['details']['high_critical_incidents']}  |  "
-        f"Contained: {posture['details']['contained_incidents']}  |  "
-        f"Resolved: {posture['details']['resolved_incidents']}"
-    )
+    norm_score = max(0.0, min(1.0, float(posture_score) / 100.0))
+    st.progress(norm_score)
 
     # ----------------------------------------------
     # THREAT OVERVIEW
