@@ -94,7 +94,9 @@ def test_containment_engine():
     # STEP 5: Link evidence
     # --------------------------------------------------
 
-    event_ids = alert.get("event_ids", [])
+    event_ids = alert["evidence"]["event_ids"]
+
+    assert event_ids, "Detection alert evidence contains no event IDs"
 
     for event_id in event_ids:
         link_event_to_incident(
@@ -104,10 +106,7 @@ def test_containment_engine():
 
     linked_events = get_incident_events(incident_id)
 
-    # Evidence linking is checked only when detector
-    # provides event IDs.
-    if event_ids:
-        assert linked_events, "Detection evidence was not linked"
+    assert linked_events, "Detection evidence was not linked"
 
     # --------------------------------------------------
     # STEP 6: Execute containment

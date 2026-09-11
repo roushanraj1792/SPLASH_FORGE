@@ -892,7 +892,7 @@ def update_incident_status(
 ):
 
     allowed_transitions = {
-        "NEW": ["TRIAGED"],
+        "NEW": ["TRIAGED", "CONTAINED"],
         "TRIAGED": ["INVESTIGATING"],
         "INVESTIGATING": ["CONTAINED"],
         "CONTAINED": ["RESOLVED"],
