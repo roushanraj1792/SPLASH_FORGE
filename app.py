@@ -44,7 +44,409 @@ st.set_page_config(
     page_title="SentinelX SOC",
     page_icon="S",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
+)
+
+st.markdown(
+    """
+    <style>
+    :root {
+        --sx-bg: #07111F;
+        --sx-panel: #0F1D2E;
+        --sx-panel-2: #13243A;
+        --sx-border: #253B55;
+        --sx-border-light: rgba(37, 59, 85, 0.6);
+        --sx-text: #F4F8FC;
+        --sx-muted: #8FA3B8;
+        --sx-cyan: #38D9FF;
+        --sx-indigo: #7C6CFF;
+        --sx-green: #3DDB9A;
+        --sx-amber: #FFB84D;
+        --sx-red: #FF667D;
+    }
+
+    /* Global Shell & Container */
+    [data-testid="stAppViewContainer"] {
+        background:
+            radial-gradient(circle at 85% 5%, rgba(56, 217, 255, 0.06), transparent 28%),
+            radial-gradient(circle at 5% 45%, rgba(124, 108, 255, 0.04), transparent 30%),
+            linear-gradient(180deg, #07111F 0%, #060E1A 55%, #050B14 100%) !important;
+        color: #F4F8FC !important;
+    }
+
+    [data-testid="stHeader"] {
+        background: rgba(7, 17, 31, 0.82) !important;
+        backdrop-filter: blur(8px) !important;
+    }
+
+    section[data-testid="stSidebar"],
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+
+    .main .block-container {
+        max-width: 1540px !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        padding: 14px 24px 34px !important;
+        color: #F4F8FC !important;
+    }
+
+    /* Typography & Headings */
+    h1, h2, h3, h4, h5, h6 {
+        color: #F4F8FC !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.3px !important;
+    }
+
+    h1 {
+        font-size: 1.55rem !important;
+        padding-bottom: 4px !important;
+    }
+
+    h2, h3 {
+        font-size: 1.22rem !important;
+        margin-top: 10px !important;
+    }
+
+    .stCaption, p, span, label, [data-testid="stMarkdownContainer"] p {
+        color: #F4F8FC;
+    }
+
+    .stCaption {
+        color: #8FA3B8 !important;
+        font-size: 0.82rem !important;
+    }
+
+    hr {
+        border-color: #253B55 !important;
+        opacity: 0.6 !important;
+        margin: 18px 0 !important;
+    }
+
+    /* Top Command Header */
+    .sx-top-nav-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+        background: linear-gradient(145deg, rgba(15, 29, 46, 0.98), rgba(7, 17, 31, 0.98)) !important;
+        border: 1px solid #253B55 !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    }
+
+    .sx-top-nav-kicker {
+        color: #38D9FF !important;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .sx-top-nav-title {
+        color: #F4F8FC;
+        font-size: 1.08rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+    }
+
+    .sx-top-nav-live {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #3DDB9A !important;
+        font-size: 0.70rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        white-space: nowrap;
+    }
+
+    .sx-top-live-dot {
+        width: 8px;
+        height: 8px;
+        background: #3DDB9A;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 8px #3DDB9A;
+        animation: sx-pulse 2s infinite;
+    }
+
+    @keyframes sx-pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(61, 219, 154, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(61, 219, 154, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(61, 219, 154, 0); }
+    }
+
+    /* Panels & Containers */
+    .sx-panel {
+        background: linear-gradient(145deg, rgba(15, 29, 46, 0.98), rgba(7, 17, 31, 0.98)) !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 10px;
+        padding: 16px 20px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        margin-bottom: 12px;
+    }
+
+    [data-testid="stVerticalBlockBorderWrapper"] > div {
+        background: #0F1D2E !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 10px !important;
+        padding: 16px 20px !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2) !important;
+        margin-bottom: 14px !important;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        background: #0F1D2E !important;
+        color: #F4F8FC !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 6px !important;
+        padding: 8px 16px !important;
+        font-weight: 600 !important;
+        font-size: 0.84rem !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .stButton > button:hover {
+        background: #13243A !important;
+        border-color: #38D9FF !important;
+        color: #38D9FF !important;
+        box-shadow: 0 0 10px rgba(56, 217, 255, 0.25) !important;
+    }
+
+    .stButton > button[kind="primary"],
+    [data-testid="baseButton-primary"] {
+        background: linear-gradient(135deg, #13243A, #0F1D2E) !important;
+        border-color: #38D9FF !important;
+        color: #38D9FF !important;
+        box-shadow: 0 0 12px rgba(56, 217, 255, 0.28) !important;
+        font-weight: 700 !important;
+    }
+
+    /* Native Metrics */
+    [data-testid="stMetric"], .stMetric {
+        background: linear-gradient(145deg, #0F1D2E, #13243A) !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 8px !important;
+        padding: 14px 18px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+        transition: border-color 0.2s ease !important;
+    }
+
+    [data-testid="stMetric"]:hover {
+        border-color: rgba(56, 217, 255, 0.4) !important;
+    }
+
+    [data-testid="stMetricLabel"] p {
+        color: #8FA3B8 !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.2px !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #38D9FF !important;
+        font-size: 1.85rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.5px !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    }
+
+    /* DataFrames & Tables */
+    [data-testid="stDataFrame"], [data-testid="stTable"] {
+        border: 1px solid #253B55 !important;
+        border-radius: 8px !important;
+        background: #0F1D2E !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+        overflow: hidden !important;
+    }
+
+    div[data-testid="stDataFrame"] > div {
+        background: #0F1D2E !important;
+    }
+
+    table {
+        background: #0F1D2E !important;
+        color: #F4F8FC !important;
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+
+    th {
+        background: #13243A !important;
+        color: #8FA3B8 !important;
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        padding: 10px 14px !important;
+        border-bottom: 1px solid #253B55 !important;
+    }
+
+    td {
+        padding: 10px 14px !important;
+        border-bottom: 1px solid rgba(37, 59, 85, 0.4) !important;
+        font-size: 0.85rem !important;
+        color: #F4F8FC !important;
+    }
+
+    tr:hover td {
+        background: rgba(19, 36, 58, 0.7) !important;
+    }
+
+    /* Expanders */
+    [data-testid="stExpander"] {
+        background: #0F1D2E !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 8px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stExpander"] summary {
+        color: #F4F8FC !important;
+        font-weight: 700 !important;
+        font-size: 0.88rem !important;
+        padding: 10px 16px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    [data-testid="stExpander"] summary:hover {
+        color: #38D9FF !important;
+        background: #13243A !important;
+    }
+
+    [data-testid="stExpander"] summary svg {
+        fill: #8FA3B8 !important;
+    }
+
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+        padding: 14px 18px !important;
+        border-top: 1px solid #253B55 !important;
+    }
+
+    /* Selectboxes & Inputs */
+    .stSelectbox label {
+        color: #8FA3B8 !important;
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"] > div {
+        background: #13243A !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 6px !important;
+        color: #F4F8FC !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"]:hover > div {
+        border-color: #38D9FF !important;
+    }
+
+    div[data-baseweb="popover"],
+    ul[role="listbox"] {
+        background: #0F1D2E !important;
+        border: 1px solid #253B55 !important;
+        color: #F4F8FC !important;
+    }
+
+    li[role="option"] {
+        color: #F4F8FC !important;
+    }
+
+    li[role="option"]:hover,
+    li[aria-selected="true"] {
+        background: #13243A !important;
+        color: #38D9FF !important;
+    }
+
+    /* Status Notifications */
+    .stAlert, [data-testid="stAlert"] {
+        border-radius: 6px !important;
+        border-width: 1px !important;
+        font-weight: 600 !important;
+        font-size: 0.84rem !important;
+        padding: 8px 14px !important;
+    }
+
+    [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]),
+    div[data-baseweb="notification"]:has([aria-label="Success"]) {
+        background: rgba(61, 219, 154, 0.12) !important;
+        border: 1px solid rgba(61, 219, 154, 0.35) !important;
+        color: #3DDB9A !important;
+    }
+
+    [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]),
+    div[data-baseweb="notification"]:has([aria-label="Warning"]) {
+        background: rgba(255, 184, 77, 0.12) !important;
+        border: 1px solid rgba(255, 184, 77, 0.35) !important;
+        color: #FFB84D !important;
+    }
+
+    [data-testid="stAlert"]:has([data-testid="stNotificationContentError"]),
+    div[data-baseweb="notification"]:has([aria-label="Error"]) {
+        background: rgba(255, 102, 125, 0.12) !important;
+        border: 1px solid rgba(255, 102, 125, 0.35) !important;
+        color: #FF667D !important;
+    }
+
+    [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]),
+    div[data-baseweb="notification"]:has([aria-label="Info"]) {
+        background: rgba(56, 217, 255, 0.10) !important;
+        border: 1px solid rgba(56, 217, 255, 0.30) !important;
+        color: #38D9FF !important;
+    }
+
+    /* Code Blocks */
+    code, pre, [data-testid="stCodeBlock"] {
+        background: #13243A !important;
+        color: #38D9FF !important;
+        border: 1px solid #253B55 !important;
+        border-radius: 4px !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* Badges */
+    .sx-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+    }
+
+    .sx-badge-critical { background: rgba(255, 102, 125, 0.18); color: #FF667D; border: 1px solid rgba(255, 102, 125, 0.4); }
+    .sx-badge-high { background: rgba(255, 184, 77, 0.18); color: #FFB84D; border: 1px solid rgba(255, 184, 77, 0.4); }
+    .sx-badge-medium { background: rgba(124, 108, 255, 0.18); color: #7C6CFF; border: 1px solid rgba(124, 108, 255, 0.4); }
+    .sx-badge-low { background: rgba(61, 219, 154, 0.18); color: #3DDB9A; border: 1px solid rgba(61, 219, 154, 0.4); }
+    .sx-badge-active { background: rgba(56, 217, 255, 0.18); color: #38D9FF; border: 1px solid rgba(56, 217, 255, 0.4); }
+    .sx-badge-contained { background: rgba(61, 219, 154, 0.18); color: #3DDB9A; border: 1px solid rgba(61, 219, 154, 0.4); }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #07111F; }
+    ::-webkit-scrollbar-thumb { background: #253B55; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38D9FF; }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 
@@ -95,53 +497,52 @@ initialize_containment_tables()
 
 
 # ==================================================
-# SIDEBAR
+# FRONT-PAGE NAVIGATION
 # ==================================================
 
-with st.sidebar:
+if "selected_page" not in st.session_state:
+    st.session_state.selected_page = "Dashboard"
 
-    st.title("SENTINELX")
+selected_page = st.session_state.selected_page
 
-    st.caption(
-        "Security Operations Center"
-    )
+st.markdown(
+    """
+    <div class="sx-top-nav-header">
+        <div>
+            <div class="sx-top-nav-kicker">SENTINELX / SECURITY OPERATIONS CENTER</div>
+            <div class="sx-top-nav-title">SECURITY OPERATIONS COMMAND CENTER</div>
+        </div>
+        <div class="sx-top-nav-live">
+            <span class="sx-top-live-dot"></span>
+            SOC SYSTEM OPERATIONAL
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-    st.divider()
+nav_items = [
+    ("⌂  Dashboard", "Dashboard", "nav_dashboard"),
+    ("◉  Live Events", "Live Events", "nav_live_events"),
+    ("!  Security Alerts", "Security Alerts", "nav_security_alerts"),
+    ("◆  Incidents", "Incidents", "nav_incidents"),
+    ("✣  MITRE ATT&CK", "MITRE ATT&CK", "nav_mitre"),
+    ("≡  Audit Logs", "Audit Logs", "nav_audit")
+]
 
-    st.subheader(
-        "SOC Navigation"
-    )
+nav_cols = st.columns(6)
 
-    selected_page = st.radio(
-        "Navigate",
-        [
-            "Dashboard",
-            "Live Events",
-            "Security Alerts",
-            "Incidents",
-            "MITRE ATT&CK",
-            "Audit Logs"
-        ],
-        label_visibility="collapsed"
-    )
-
-    st.divider()
-
-    st.subheader(
-        "System Status"
-    )
-
-    st.success(
-        "Detection Engine ONLINE"
-    )
-
-    st.success(
-        "Risk Engine ONLINE"
-    )
-
-    st.success(
-        "Database CONNECTED"
-    )
+for col, (label, page, key) in zip(nav_cols, nav_items):
+    with col:
+        is_active = (page == selected_page)
+        if st.button(
+            label,
+            use_container_width=True,
+            key=key,
+            type="primary" if is_active else "secondary"
+        ):
+            st.session_state.selected_page = page
+            st.rerun()
 
 
 # ==================================================
@@ -575,17 +976,23 @@ containment_actions = (
 
 if selected_page == "Dashboard":
 
-    st.title(
-        "SENTINELX"
-    )
-
-    st.caption(
-        "AI-Assisted Autonomous Security Operations Center"
-    )
-
-    st.write(
-        "Real-time security monitoring, threat detection, "
-        "risk analysis and incident response."
+    st.markdown(
+        """
+        <div class="sx-panel" style="margin-bottom: 1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <div class="sx-top-nav-kicker">SENTINELX • SECURITY OPERATIONS CENTER</div>
+                    <div style="font-size:1.5rem; font-weight:800; color:#E7EEF2; margin-top:2px;">Autonomous Threat Command Center</div>
+                    <div style="color:#91A4B0; font-size:0.88rem; margin-top:2px;">Detect → Prioritize → Investigate → Contain</div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="color:#4FD39A; font-weight:800; font-size:0.75rem; letter-spacing:1px;">● SOC ENGINE ACTIVE</span>
+                    <div style="color:#91A4B0; font-size:0.78rem;">AI-assisted security monitoring</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     st.divider()
