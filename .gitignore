@@ -36,3 +36,6 @@ Thumbs.db
 
 # Scratch
 scratch/
+cloudflared.exe
+tunnel.log
+tunnel_url.txt
