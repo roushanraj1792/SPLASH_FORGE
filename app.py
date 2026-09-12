@@ -995,7 +995,7 @@ if not st.session_state.authenticated:
                 unsafe_allow_html=True
             )
 
-            login_user = st.text_input("Username", key="login_username", placeholder="analyst or admin")
+            login_user = st.text_input("Username", key="login_username", placeholder="Enter username")
             login_pass = st.text_input("Password", key="login_password", type="password", placeholder="Enter password")
 
             if st.button("Access SentinelX SOC", type="primary", use_container_width=True, key="btn_login_submit"):
@@ -1016,9 +1016,7 @@ if not st.session_state.authenticated:
                     """
                     <div style="font-size: 0.78rem; line-height: 1.6; color: #94A3B8;">
                         <b>SOC Analyst Account</b> (Triage, investigate & export):<br>
-                        <code>analyst</code> / <code>SentinelX@Analyst2026</code><br><br>
-                        <b>SOC Administrator Account</b> (Full response & containment):<br>
-                        <code>admin</code> / <code>SentinelX@Admin2026</code>
+                        <code>analyst</code> / <code>SentinelX@Analyst2026</code>
                     </div>
                     """,
                     unsafe_allow_html=True

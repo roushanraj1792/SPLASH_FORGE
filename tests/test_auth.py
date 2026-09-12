@@ -27,29 +27,73 @@ def test_password_hashing():
     assert verify_password("", s, h) is False
 
 
-def test_demo_users_seed_and_auth():
+def test_analyst_demo_auth_accepted():
     init_auth_table()
+    analyst_user = authenticate_user("analyst", "SentinelX@Analyst2026")
+    assert analyst_user is not None
+    assert analyst_user["username"] == "analyst"
+    assert analyst_user["role"] == "ANALYST"
+    assert analyst_user["last_login"] is not None
 
-    # Authenticate seeded admin
-    admin_user = authenticate_user("admin", "SentinelX@Admin2026")
+
+def test_old_admin_demo_password_rejected(monkeypatch):
+    # Ensure legacy hardcoded demo password is never accepted
+    monkeypatch.delenv("SENTINELX_ADMIN_PASSWORD", raising=False)
+    init_auth_table()
+    bad_admin = authenticate_user("admin", "SentinelX@Admin2026")
+    assert bad_admin is None
+
+
+def test_admin_requires_private_env_password(monkeypatch):
+    # Case 1: When SENTINELX_ADMIN_PASSWORD is empty or unset, admin is disabled
+    monkeypatch.delenv("SENTINELX_ADMIN_PASSWORD", raising=False)
+    assert authenticate_user("admin", "AnyPassword") is None
+
+    # Case 2: When SENTINELX_ADMIN_PASSWORD is set in environment
+    test_secret = "PrivateHostSecret!2026#Secure"
+    monkeypatch.setenv("SENTINELX_ADMIN_PASSWORD", test_secret)
+
+    # Legacy demo password is still rejected
+    assert authenticate_user("admin", "SentinelX@Admin2026") is None
+
+    # Wrong secret is rejected
+    assert authenticate_user("admin", "WrongHostSecret") is None
+
+    # Valid private password is accepted
+    admin_user = authenticate_user("admin", test_secret)
     assert admin_user is not None
     assert admin_user["username"] == "admin"
     assert admin_user["role"] == "ADMIN"
     assert admin_user["last_login"] is not None
 
-    # Authenticate seeded analyst
-    analyst_user = authenticate_user("analyst", "SentinelX@Analyst2026")
-    assert analyst_user is not None
-    assert analyst_user["username"] == "analyst"
-    assert analyst_user["role"] == "ANALYST"
 
-    # Bad password
-    bad_auth = authenticate_user("admin", "WrongPassword")
-    assert bad_auth is None
-
+def test_invalid_credentials_rejected():
+    init_auth_table()
+    # Bad analyst password
+    assert authenticate_user("analyst", "WrongPassword123") is None
+    # Empty credentials
+    assert authenticate_user("", "") is None
+    assert authenticate_user("analyst", "") is None
+    assert authenticate_user("", "some_password") is None
     # Nonexistent user
-    unknown_auth = authenticate_user("ghost_user", "AnyPassword")
-    assert unknown_auth is None
+    assert authenticate_user("ghost_user", "AnyPassword") is None
+
+
+def test_admin_and_analyst_role_isolation(monkeypatch):
+    test_secret = "PrivateHostSecret!2026#Secure"
+    monkeypatch.setenv("SENTINELX_ADMIN_PASSWORD", test_secret)
+
+    admin_user = authenticate_user("admin", test_secret)
+    analyst_user = authenticate_user("analyst", "SentinelX@Analyst2026")
+
+    assert admin_user is not None
+    assert analyst_user is not None
+
+    # Roles and privileges must remain strictly isolated
+    assert admin_user["role"] == "ADMIN"
+    assert analyst_user["role"] == "ANALYST"
+    assert admin_user["id"] != analyst_user["id"]
+    assert admin_user["username"] != analyst_user["username"]
 
 
 def test_user_creation_and_roles():

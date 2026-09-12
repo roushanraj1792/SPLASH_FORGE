@@ -8,8 +8,8 @@ import hashlib
 import os
 import secrets
 from datetime import datetime
-from pathlib import Path
 import sqlite3
+import dotenv
 
 from database.database import get_connection, DATABASE_PATH
 
@@ -48,7 +48,9 @@ def verify_password(password: str, salt_hex: str, hash_hex: str) -> bool:
 def init_auth_table():
     """
     Initialize users table and seed initial demo accounts if empty.
+    Ensures ADMIN account requires a private host secret from .env.
     """
+    dotenv.load_dotenv()
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -67,24 +69,15 @@ def init_auth_table():
         )
         conn.commit()
 
-        # Check if users table is empty; if so, seed default demo accounts
+        now = datetime.now().isoformat()
+        admin_env_pass = os.getenv("SENTINELX_ADMIN_PASSWORD", "").strip()
+
+        # Check if users table is empty; if so, seed accounts
         cursor.execute("SELECT COUNT(*) FROM users")
         count = cursor.fetchone()[0]
 
         if count == 0:
-            now = datetime.now().isoformat()
-            
-            # Seed Demo Admin
-            admin_hash, admin_salt = hash_password("SentinelX@Admin2026")
-            cursor.execute(
-                """
-                INSERT INTO users (username, password_hash, salt, role, created_at)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                ("admin", admin_hash, admin_salt, "ADMIN", now)
-            )
-
-            # Seed Demo SOC Analyst
+            # Seed Demo SOC Analyst (Always available for team and judges)
             analyst_hash, analyst_salt = hash_password("SentinelX@Analyst2026")
             cursor.execute(
                 """
@@ -94,7 +87,47 @@ def init_auth_table():
                 ("analyst", analyst_hash, analyst_salt, "ANALYST", now)
             )
 
+            # Seed Admin Account (Configured via private .env or unguessable random token)
+            if admin_env_pass:
+                admin_hash, admin_salt = hash_password(admin_env_pass)
+            else:
+                admin_hash, admin_salt = hash_password(secrets.token_urlsafe(32))
+
+            cursor.execute(
+                """
+                INSERT INTO users (username, password_hash, salt, role, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                ("admin", admin_hash, admin_salt, "ADMIN", now)
+            )
+
             conn.commit()
+        else:
+            # Invalidate any legacy demo password stored in existing database
+            if admin_env_pass:
+                admin_hash, admin_salt = hash_password(admin_env_pass)
+                cursor.execute(
+                    "UPDATE users SET password_hash = ?, salt = ? WHERE lower(username) = 'admin'",
+                    (admin_hash, admin_salt)
+                )
+                conn.commit()
+            else:
+                # If no private password is set in .env yet, check if admin has legacy demo hash
+                cursor.execute(
+                    "SELECT id, password_hash, salt FROM users WHERE lower(username) = 'admin'"
+                )
+                admin_row = cursor.fetchone()
+                if admin_row:
+                    stored_hash = admin_row[1]
+                    stored_salt = admin_row[2]
+                    # If it matches legacy demo password, invalidate it with a random hash
+                    if verify_password("SentinelX@Admin2026", stored_salt, stored_hash):
+                        rand_hash, rand_salt = hash_password(secrets.token_urlsafe(32))
+                        cursor.execute(
+                            "UPDATE users SET password_hash = ?, salt = ? WHERE id = ?",
+                            (rand_hash, rand_salt, admin_row[0])
+                        )
+                        conn.commit()
     finally:
         conn.close()
 
@@ -102,8 +135,10 @@ def init_auth_table():
 def authenticate_user(username: str, password: str):
     """
     Authenticate a user by username and password.
+    Enforces that ADMIN account requires the private host secret from .env.
     Returns user dict without sensitive hashes, or None if authentication fails.
     """
+    dotenv.load_dotenv()
     init_auth_table()
 
     if not username or not password:
@@ -135,6 +170,34 @@ def authenticate_user(username: str, password: str):
         role = row[4]
         created_at = row[5]
 
+        # Privilege Enforcement: ADMIN requires local private password from .env
+        if role == "ADMIN" or clean_user == "admin":
+            admin_env_pass = os.getenv("SENTINELX_ADMIN_PASSWORD", "").strip()
+            if not admin_env_pass:
+                # Private password is not set in .env; admin login is disabled
+                return None
+
+            # Constant-time comparison against private environment variable
+            if not secrets.compare_digest(password, admin_env_pass):
+                return None
+
+            # Update last login
+            now = datetime.now().isoformat()
+            cursor.execute(
+                "UPDATE users SET last_login = ? WHERE id = ?",
+                (now, user_id)
+            )
+            conn.commit()
+
+            return {
+                "id": user_id,
+                "username": uname,
+                "role": role,
+                "created_at": created_at,
+                "last_login": now
+            }
+
+        # Standard verification for non-admin accounts (e.g. analyst)
         if not verify_password(password, stored_salt, stored_hash):
             return None
 

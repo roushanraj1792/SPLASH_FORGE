@@ -1,4 +1,4 @@
-﻿# SentinelX Public Access Launcher
+# SentinelX Public Access Launcher
 # Boots SentinelX on port 8501 and creates a public HTTPS tunnel via Cloudflare
 $ErrorActionPreference = "Continue"
 
@@ -93,9 +93,9 @@ if ($tunnelUrl) {
     Write-Host " LOCAL ACCESS     : " -NoNewline; Write-Host "http://localhost:8501" -ForegroundColor Gray
     Write-Host " STATUS           : " -NoNewline; Write-Host "LIVE & OPERATIONAL (Cross-network ready)" -ForegroundColor Green
     Write-Host ""
-    Write-Host " DEMO LOGIN CREDENTIALS:" -ForegroundColor Yellow
-    Write-Host "   Admin   : admin   / SentinelX@Admin2026   (Role: ADMIN - Full Control)"
+    Write-Host " DEMO LOGIN CREDENTIALS (TEAM & JUDGES):" -ForegroundColor Yellow
     Write-Host "   Analyst : analyst / SentinelX@Analyst2026 (Role: ANALYST - Investigations)"
+    Write-Host "   Admin   : Private administrator access secured via .env (Host only)"
     Write-Host ""
     Write-Host " Share the PUBLIC HTTPS URL above with your teammates and judges!" -ForegroundColor Cyan
     Write-Host " To stop SentinelX and the tunnel, run: .\stop_sentinelx.ps1" -ForegroundColor Gray
