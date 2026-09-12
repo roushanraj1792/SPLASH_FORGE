@@ -1027,6 +1027,7 @@ if "selected_page" not in st.session_state:
 selected_page = st.session_state.selected_page
 current_user = st.session_state.current_user or {"username": "analyst", "role": "ANALYST"}
 user_disp = str(current_user.get("username", "analyst")).upper()
+role_disp = str(current_user.get("role", "ANALYST")).upper()
 st.markdown(render_app_header(user_disp, role_disp), unsafe_allow_html=True)
 
 nav_items = [
