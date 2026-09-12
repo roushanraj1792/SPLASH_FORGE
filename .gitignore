@@ -39,3 +39,5 @@ scratch/
 cloudflared.exe
 tunnel.log
 tunnel_url.txt
+
+start_public_sentinelx.ps1.backup
