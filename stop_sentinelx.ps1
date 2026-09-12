@@ -1,7 +1,18 @@
-﻿# SentinelX Clean Shutdown Script
+# SentinelX Clean Shutdown Script
 Write-Host "Stopping SentinelX services..." -ForegroundColor Cyan
 
 # Stop cloudflared
+try {
+    $service = New-Object -ComObject("Schedule.Service")
+    $service.Connect()
+    $rf = $service.GetFolder("\")
+    $t = $rf.GetTask("SentinelX_PublicTunnel")
+    if ($t) {
+        if ($t.State -eq 4) { $t.Stop(0) }
+        $rf.DeleteTask("SentinelX_PublicTunnel", 0)
+    }
+} catch {}
+
 $cfProcesses = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue
 if ($cfProcesses) {
     $cfProcesses | Stop-Process -Force

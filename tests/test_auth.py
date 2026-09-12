@@ -135,5 +135,77 @@ def test_get_all_users():
     assert "analyst" in usernames
 
 
+def test_admin_auth_quoted_and_whitespace_resilience(monkeypatch):
+    # Test double-quoted secret in environment
+    monkeypatch.setenv("SENTINELX_ADMIN_PASSWORD", '"QuotedAdminSecret!999"')
+    admin_user = authenticate_user("admin", "QuotedAdminSecret!999")
+    assert admin_user is not None
+    assert admin_user["role"] == "ADMIN"
+
+    # Test single-quoted secret in environment
+    monkeypatch.setenv("SENTINELX_ADMIN_PASSWORD", "'SingleQuotedSecret!888'")
+    admin_user = authenticate_user("admin", "SingleQuotedSecret!888")
+    assert admin_user is not None
+    assert admin_user["role"] == "ADMIN"
+
+    # Test accidental leading/trailing whitespace submitted by user
+    admin_user_spaced = authenticate_user("admin", "  SingleQuotedSecret!888  ")
+    assert admin_user_spaced is not None
+    assert admin_user_spaced["role"] == "ADMIN"
+
+
+def test_admin_auth_missing_sqlite_row_self_heals(monkeypatch):
+    from database.database import get_connection
+
+    init_auth_table()
+    test_secret = "ResilientSecret!2026"
+    monkeypatch.setenv("SENTINELX_ADMIN_PASSWORD", test_secret)
+
+    # Temporarily remove admin row from sqlite to test self-healing
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE lower(username) = 'admin'")
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Admin should still authenticate and re-create its row
+    admin_user = authenticate_user("admin", test_secret)
+    assert admin_user is not None
+    assert admin_user["username"] == "admin"
+    assert admin_user["role"] == "ADMIN"
+
+    # Confirm admin row exists in sqlite
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, role FROM users WHERE lower(username) = 'admin'")
+        row = cursor.fetchone()
+        assert row is not None
+        assert row[1] == "ADMIN"
+    finally:
+        conn.close()
+
+
+def test_real_env_admin_authentication():
+    import os
+    import dotenv
+    dotenv.load_dotenv(override=True)
+    real_pass = os.getenv("SENTINELX_ADMIN_PASSWORD", "")
+    if real_pass:
+        # Correct admin credentials must authenticate
+        admin_user = authenticate_user("admin", real_pass)
+        assert admin_user is not None
+        assert admin_user["username"] == "admin"
+        assert admin_user["role"] == "ADMIN"
+
+        # Old hardcoded admin password must NOT authenticate
+        assert authenticate_user("admin", "SentinelX@Admin2026") is None
+
+        # Wrong admin password must NOT authenticate
+        assert authenticate_user("admin", "WrongAdminPassword!NeverMatch") is None
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main(["-v", __file__]))

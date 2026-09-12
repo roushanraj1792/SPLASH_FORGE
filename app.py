@@ -1,5 +1,9 @@
 import json
 from datetime import datetime
+from pathlib import Path
+import dotenv
+
+dotenv.load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
 
 import streamlit as st
 
@@ -65,6 +69,14 @@ from simulator.privilege_escalation_simulator import (
 )
 from simulator.suspicious_powershell_simulator import (
     generate_suspicious_powershell_events
+)
+from services.ui_theme import (
+    get_theme_css,
+    render_app_header,
+    render_briefing_bar,
+    render_kpi_card,
+    render_login_header,
+    render_empty_state
 )
 
 
@@ -902,6 +914,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown(get_theme_css(), unsafe_allow_html=True)
+
 
 # ==================================================
 # ALERT TYPE NORMALIZATION
@@ -960,36 +974,16 @@ if "current_user" not in st.session_state:
     st.session_state.current_user = None
 
 if not st.session_state.authenticated:
-    st.markdown(
-        """
-        <div style="max-width: 480px; margin: 30px auto 14px; text-align: center;">
-            <div class="sx-brand-wrapper" style="justify-content: center; margin-bottom: 10px;">
-                <svg width="56" height="56" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M24 3.5L7 10.5V22C7 33.2 14.3 43.5 24 46C33.7 43.5 41 33.2 41 22V10.5L24 3.5Z" stroke="#38BDF8" stroke-width="2.4" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.08)"/>
-                    <path d="M24 8L11.5 13.8V22C11.5 30.5 16.8 38.3 24 40.8C31.2 38.3 36.5 30.5 36.5 22V13.8L24 8Z" stroke="rgba(99, 102, 241, 0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-                    <path d="M16.5 17.5L31.5 30.5M31.5 17.5L16.5 30.5" stroke="#38BDF8" stroke-width="2.8" stroke-linecap="round"/>
-                    <circle cx="24" cy="24" r="3.2" fill="#38BDF8" stroke="#0A111C" stroke-width="1.6"/>
-                </svg>
-            </div>
-            <div style="font-size: 1.55rem; font-weight: 900; letter-spacing: 2px; color: #F8FAFC;">
-                SENTINEL<span style="color: #38BDF8;">X</span>
-            </div>
-            <div style="font-size: 0.74rem; font-weight: 700; letter-spacing: 1.2px; color: #94A3B8; text-transform: uppercase; margin-bottom: 20px;">
-                Autonomous Security Operations Center
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown(render_login_header(), unsafe_allow_html=True)
 
     _, login_col, _ = st.columns([1, 1.4, 1])
     with login_col:
         with st.container():
             st.markdown(
                 """
-                <div class="sx-panel" style="padding: 20px 22px; margin-bottom: 12px;">
-                    <div style="font-size: 0.82rem; font-weight: 800; color: #38BDF8; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px;">
-                        🔐 Analyst Access Gateway
+                <div class="sx-panel" style="padding: 24px 26px; margin-bottom: 14px;">
+                    <div style="font-size: 0.85rem; font-weight: 800; color: #38BDF8; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                        <span>🔐</span> Analyst Access Gateway
                     </div>
                 """,
                 unsafe_allow_html=True
@@ -1009,18 +1003,16 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Invalid credentials. Please verify your username and password.")
 
-            st.markdown("</div>", unsafe_allow_html=True)
-
-            with st.expander("🔑 Demo Access Credentials (Judges & Team)", expanded=True):
-                st.markdown(
-                    """
-                    <div style="font-size: 0.78rem; line-height: 1.6; color: #94A3B8;">
-                        <b>SOC Analyst Account</b> (Triage, investigate & export):<br>
-                        <code>analyst</code> / <code>SentinelX@Analyst2026</code>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            st.markdown(
+                """
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px solid rgba(56,189,248,0.12); font-size:0.65rem; color:#64748B; font-weight:700; letter-spacing:0.8px;">
+                    <span>SECURE ACCESS</span>
+                    <span>SOC OPERATIONS PLATFORM</span>
+                </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     st.stop()
 
@@ -1035,48 +1027,15 @@ if "selected_page" not in st.session_state:
 selected_page = st.session_state.selected_page
 current_user = st.session_state.current_user or {"username": "analyst", "role": "ANALYST"}
 user_disp = str(current_user.get("username", "analyst")).upper()
-role_disp = str(current_user.get("role", "ANALYST")).upper()
-
-st.markdown(
-    f"""
-    <div class="sx-top-header">
-        <div class="sx-brand-wrapper">
-            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-                <path d="M24 3.5L7 10.5V22C7 33.2 14.3 43.5 24 46C33.7 43.5 41 33.2 41 22V10.5L24 3.5Z" stroke="#38BDF8" stroke-width="2.4" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.08)"/>
-                <path d="M24 8L11.5 13.8V22C11.5 30.5 16.8 38.3 24 40.8C31.2 38.3 36.5 30.5 36.5 22V13.8L24 8Z" stroke="rgba(99, 102, 241, 0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-                <path d="M16.5 17.5L31.5 30.5M31.5 17.5L16.5 30.5" stroke="#38BDF8" stroke-width="2.8" stroke-linecap="round"/>
-                <circle cx="24" cy="24" r="3.2" fill="#38BDF8" stroke="#0A111C" stroke-width="1.6"/>
-            </svg>
-            <div class="sx-brand-text">
-                <div class="sx-brand-title">SENTINEL<span style="color:#38BDF8;">X</span></div>
-                <div class="sx-brand-sub">Autonomous Security Operations Center</div>
-            </div>
-        </div>
-        <div class="sx-top-status-right">
-            <div class="sx-chips-row" style="margin-top:0;">
-                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
-                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
-                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>CONTAINMENT READY</span>
-                <span class="sx-chip sx-chip-indigo" style="border:1px solid rgba(56,189,248,0.4); color:#38BDF8;">
-                    👤 {user_disp} [{role_disp}]
-                </span>
-            </div>
-            <div style="color:#64748B; font-size:0.68rem; font-family:ui-monospace, monospace; letter-spacing:0.6px; margin-top:3px;">
-                ● TELEMETRY STREAM ACTIVE • SQLITE WAL ENGINE
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown(render_app_header(user_disp, role_disp), unsafe_allow_html=True)
 
 nav_items = [
-    ("Dashboard", "Dashboard", "nav_dashboard"),
-    ("Live Events", "Live Events", "nav_live_events"),
-    ("Security Alerts", "Security Alerts", "nav_security_alerts"),
-    ("Incidents", "Incidents", "nav_incidents"),
-    ("MITRE ATT&CK", "MITRE ATT&CK", "nav_mitre"),
-    ("Audit Logs", "Audit Logs", "nav_audit")
+    ("01 Dashboard", "Dashboard", "nav_dashboard"),
+    ("02 Live Events", "Live Events", "nav_live_events"),
+    ("03 Security Alerts", "Security Alerts", "nav_security_alerts"),
+    ("04 Incidents", "Incidents", "nav_incidents"),
+    ("05 MITRE ATT&CK", "MITRE ATT&CK", "nav_mitre"),
+    ("06 Audit Logs", "Audit Logs", "nav_audit")
 ]
 
 nav_cols = st.columns([1, 1, 1, 1, 1, 1, 0.9, 0.9])
@@ -1558,121 +1517,85 @@ containment_actions = (
 if selected_page == "Dashboard":
 
     st.markdown(
-        f"""
-        <div class="sx-briefing-bar">
-            <div class="sx-briefing-left">
-                <span class="sx-pulse-dot"></span>
-                <span class="sx-briefing-title">LIVE SOC SITUATIONAL BRIEFING</span>
-                <span class="sx-briefing-divider">•</span>
-                <span class="sx-briefing-text">All 5 detection engines synchronized. Policy-based autonomous host containment active.</span>
+        """
+        <div style="margin-bottom: 12px;">
+            <div style="font-size: 1.30rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.2px;">
+                SENTINELX COMMAND CENTER
             </div>
-            <div class="sx-briefing-right">
-                <span class="sx-badge sx-badge-success">POSTURE: {posture_label}</span>
-                <span class="sx-badge sx-badge-critical" style="background:rgba(239,68,68,0.12); color:#EF4444; border:1px solid rgba(239,68,68,0.3);">ACTIVE THREATS: {active_incidents}</span>
+            <div style="font-size: 0.76rem; color: #94A3B8; margin-top: 2px;">
+                Real-time security visibility, detection and incident response.
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
+    st.markdown(render_briefing_bar(posture_label, active_incidents), unsafe_allow_html=True)
+
     # ----------------------------------------------
-    # TOP SOC METRICS
+    # TOP SOC METRICS (5 KPI CARDS)
     # ----------------------------------------------
 
-    col1, col2, col3, col4 = st.columns(4)
+    kpi_col1, kpi_col2, kpi_col3, kpi_col4, kpi_col5 = st.columns(5)
 
-    with col1:
+    with kpi_col1:
         st.markdown(
-            f"""
-            <div class="sx-kpi-card">
-                <div class="sx-kpi-header">
-                    <span class="sx-kpi-label">Security Events</span>
-                    <div class="sx-kpi-icon" style="background:rgba(56, 189, 248, 0.12); color:#38BDF8;">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="sx-kpi-value" style="color:#F1F5F9;">{total_events}</div>
-                <div class="sx-kpi-meta">
-                    <span class="sx-chip-dot sx-dot-cyan"></span> Host telemetry buffer
-                </div>
-            </div>
-            """,
+            render_kpi_card(
+                "Active Incidents",
+                active_incidents,
+                "Requiring analyst response",
+                accent_color="#EF4444" if active_incidents > 0 else "#10B981",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>'
+            ),
             unsafe_allow_html=True
         )
 
-    with col2:
-        alert_accent = "#F97316" if high_alerts > 0 else "#38BDF8"
-        alert_bg = "rgba(249, 115, 22, 0.12)" if high_alerts > 0 else "rgba(56, 189, 248, 0.12)"
+    with kpi_col2:
         st.markdown(
-            f"""
-            <div class="sx-kpi-card">
-                <div class="sx-kpi-header">
-                    <span class="sx-kpi-label">High & Critical Alerts</span>
-                    <div class="sx-kpi-icon" style="background:{alert_bg}; color:{alert_accent};">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                            <line x1="12" y1="9" x2="12" y2="13"/>
-                            <line x1="12" y1="17" x2="12.01" y2="17"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="sx-kpi-value" style="color:{alert_accent};">{high_alerts}</div>
-                <div class="sx-kpi-meta">
-                    <span class="sx-chip-dot" style="background:{alert_accent};"></span> Risk score ≥ 70 or Critical
-                </div>
-            </div>
-            """,
+            render_kpi_card(
+                "Security Alerts",
+                len(risk_alerts),
+                "Correlated detections",
+                accent_color="#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>'
+            ),
             unsafe_allow_html=True
         )
 
-    with col3:
-        threat_accent = "#EF4444" if active_incidents > 0 else "#10B981"
-        threat_bg = "rgba(239, 68, 68, 0.12)" if active_incidents > 0 else "rgba(16, 185, 129, 0.12)"
+    with kpi_col3:
+        high_crit_total = high_alerts + critical_alerts
         st.markdown(
-            f"""
-            <div class="sx-kpi-card">
-                <div class="sx-kpi-header">
-                    <span class="sx-kpi-label">Active Incidents</span>
-                    <div class="sx-kpi-icon" style="background:{threat_bg}; color:{threat_accent};">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="22" y1="12" x2="18" y2="12"/>
-                            <line x1="6" y1="12" x2="2" y2="12"/>
-                            <line x1="12" y1="6" x2="12" y2="2"/>
-                            <line x1="12" y1="22" x2="12" y2="18"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="sx-kpi-value" style="color:{threat_accent};">{active_incidents}</div>
-                <div class="sx-kpi-meta">
-                    <span class="sx-chip-dot" style="background:{threat_accent};"></span> Requiring triage or response
-                </div>
-            </div>
-            """,
+            render_kpi_card(
+                "High / Critical",
+                high_crit_total,
+                "Risk score ≥ 70 or Critical",
+                accent_color="#F97316" if high_crit_total > 0 else "#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+            ),
             unsafe_allow_html=True
         )
 
-    with col4:
+    with kpi_col4:
         st.markdown(
-            f"""
-            <div class="sx-kpi-card">
-                <div class="sx-kpi-header">
-                    <span class="sx-kpi-label">Contained Threats</span>
-                    <div class="sx-kpi-icon" style="background:rgba(16, 185, 129, 0.12); color:#10B981;">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            <path d="m9 12 2 2 4-4"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="sx-kpi-value" style="color:#10B981;">{contained_incidents}</div>
-                <div class="sx-kpi-meta">
-                    <span class="sx-chip-dot sx-dot-green"></span> Isolated via host containment
-                </div>
-            </div>
-            """,
+            render_kpi_card(
+                "Events Today",
+                total_events,
+                "Host telemetry buffer",
+                accent_color="#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>'
+            ),
+            unsafe_allow_html=True
+        )
+
+    with kpi_col5:
+        st.markdown(
+            render_kpi_card(
+                "Contained Threats",
+                contained_incidents,
+                "Isolated via host quarantine",
+                accent_color="#10B981",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>'
+            ),
             unsafe_allow_html=True
         )
 
@@ -1881,37 +1804,86 @@ if selected_page == "Dashboard":
 
     st.divider()
 
-    st.markdown("### 📊 Threat Landscape Overview")
+    st.markdown("### 📊 Operational Threat Overview")
 
-    summary_col1, summary_col2, summary_col3 = st.columns(3)
+    overview_chart_col1, overview_chart_col2 = st.columns([1.2, 1])
 
-    with summary_col1:
-        st.metric(
-            "Correlated Alerts",
-            len(risk_alerts)
-        )
+    with overview_chart_col1:
+        st.markdown("**Threat Activity by Detection Engine**")
+        if risk_alerts:
+            import pandas as pd
+            activity_dict = {}
+            for al in risk_alerts:
+                atype = normalize_alert_type(al.get("alert_type", "OTHER"))
+                activity_dict[atype] = activity_dict.get(atype, 0) + 1
+            df_act = pd.DataFrame(list(activity_dict.items()), columns=["Detection Type", "Alerts"]).set_index("Detection Type")
+            st.bar_chart(df_act, color="#38BDF8", height=220)
+        else:
+            st.caption("No detections active in current telemetry stream.")
 
-    with summary_col2:
-        high_critical_count = sum(
-            1 for alert in risk_alerts
-            if alert.get("risk_level") in ["HIGH", "CRITICAL"]
-        )
-        st.metric(
-            "Priority High / Critical",
-            high_critical_count
-        )
+    with overview_chart_col2:
+        st.markdown("**Severity Distribution**")
+        if risk_alerts:
+            import pandas as pd
+            sev_levels = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+            sev_counts = {sl: 0 for sl in sev_levels}
+            for al in risk_alerts:
+                sl = str(al.get("risk_level", "LOW")).upper()
+                if sl in sev_counts:
+                    sev_counts[sl] += 1
+                else:
+                    sev_counts["LOW"] += 1
+            df_sev = pd.DataFrame(list(sev_counts.items()), columns=["Severity", "Count"]).set_index("Severity")
+            st.bar_chart(df_sev, color="#F97316", height=220)
+        else:
+            st.caption("No severity alerts recorded.")
 
-    with summary_col3:
-        detection_types = len(
-            set(
-                alert.get("alert_type", "UNKNOWN")
-                for alert in risk_alerts
-            )
-        )
-        st.metric(
-            "Active Detection Types",
-            detection_types
-        )
+    st.divider()
+
+    st.markdown("### ⚡ Recent Security Activity")
+    if risk_alerts:
+        activity_table = []
+        for al in risk_alerts[:10]:
+            al_type = normalize_alert_type(al.get("alert_type", "UNKNOWN"))
+            al_ip = al.get("source_ip", "Unknown")
+            inc_match = next((i["incident_id"] for i in incidents if normalize_alert_type(i["alert_type"]) == al_type and i["source_ip"] == al_ip), "—")
+            inc_stat = next((i["status"] for i in incidents if normalize_alert_type(i["alert_type"]) == al_type and i["source_ip"] == al_ip), "NEW")
+            activity_table.append({
+                "Time": al.get("timestamp", datetime.now().isoformat())[:19].replace("T", " "),
+                "Source": al_ip,
+                "Detection": al.get("title", al_type),
+                "Severity": al.get("risk_level", "LOW"),
+                "Risk": f"{al.get('risk_score', 0)}/100",
+                "Incident": inc_match,
+                "Status": inc_stat
+            })
+        st.dataframe(activity_table, width="stretch", hide_index=True)
+    else:
+        st.caption("No recent security activity detected.")
+
+    st.divider()
+
+    st.markdown("### 🛡️ Active Incidents")
+    active_inc_list = [i for i in incidents if i["status"] in active_statuses]
+    sev_rank = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
+    active_inc_list.sort(key=lambda x: (sev_rank.get(str(x.get("severity", "LOW")).upper(), 4), -(x.get("risk_score") or 0)))
+
+    if active_inc_list:
+        inc_table = []
+        for inc in active_inc_list[:8]:
+            inc_table.append({
+                "Incident ID": inc["incident_id"],
+                "Title": inc["title"],
+                "Severity": inc["severity"],
+                "Risk": f"{inc.get('risk_score', 0)}/100",
+                "Source": inc["source_ip"],
+                "MITRE": inc.get("mitre_technique", "—"),
+                "Status": inc["status"],
+                "Created": inc["created_at"][:19].replace("T", " ") if inc.get("created_at") else "—"
+            })
+        st.dataframe(inc_table, width="stretch", hide_index=True)
+    else:
+        st.markdown(render_empty_state("No Active Incidents", "No unresolved security incidents currently require attention.", "🛡️"), unsafe_allow_html=True)
 
     # ----------------------------------------------
     # ENGINE & PIPELINE HEALTH STATUS
@@ -1974,15 +1946,21 @@ elif selected_page == "Live Events":
 
     st.markdown(
         """
-        <div class="sx-page-title-row">
-            <div class="sx-page-title">📡 Live Security Telemetry Feed</div>
-            <div class="sx-chips-row">
-                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>STREAM ACTIVE</span>
-                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>INGESTION ONLINE</span>
+        <div style="margin-bottom: 12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div style="font-size: 1.30rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.2px;">
+                        LIVE TELEMETRY
+                    </div>
+                    <div style="font-size: 0.76rem; color: #94A3B8; margin-top: 2px;">
+                        Real-time security telemetry and host audit events ingested into the SentinelX processing pipeline.
+                    </div>
+                </div>
+                <div class="sx-chips-row">
+                    <span class="sx-chip sx-chip-green"><span class="sx-live-dot"></span>STREAM ACTIVE</span>
+                    <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>INGESTION ONLINE</span>
+                </div>
             </div>
-        </div>
-        <div class="sx-page-desc">
-            Real-time security telemetry and host audit events ingested into the SentinelX processing pipeline.
         </div>
         """,
         unsafe_allow_html=True
@@ -1992,17 +1970,25 @@ elif selected_page == "Live Events":
         # ----------------------------------------------
         # INTERACTIVE TELEMETRY FILTERS
         # ----------------------------------------------
-        filter_col1, filter_col2, filter_col3 = st.columns([2, 1, 1])
+        filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1.5, 1, 1, 1])
 
         with filter_col1:
             search_query = st.text_input(
                 "Search Telemetry",
-                placeholder="Search by IP, username, message, or ID...",
+                placeholder="Search IP, user, message, ID...",
                 key="filter_events_search"
             ).strip().lower()
 
-        unique_types = sorted(list(set(str(e.get("event_type", "")) for e in events if e.get("event_type"))))
+        unique_ips = sorted(list(set(str(e.get("source_ip", "")) for e in events if e.get("source_ip"))))
         with filter_col2:
+            selected_ip = st.selectbox(
+                "Source IP",
+                ["ALL"] + unique_ips,
+                key="filter_events_ip"
+            )
+
+        unique_types = sorted(list(set(str(e.get("event_type", "")) for e in events if e.get("event_type"))))
+        with filter_col3:
             selected_type = st.selectbox(
                 "Event Type",
                 ["ALL"] + unique_types,
@@ -2010,7 +1996,7 @@ elif selected_page == "Live Events":
             )
 
         unique_severities = ["ALL", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
-        with filter_col3:
+        with filter_col4:
             selected_severity = st.selectbox(
                 "Severity",
                 unique_severities,
@@ -2034,6 +2020,10 @@ elif selected_page == "Live Events":
                 ).lower()
                 if search_query not in combined_text:
                     continue
+
+            # Source IP filter
+            if selected_ip != "ALL" and str(event.get("source_ip", "")) != selected_ip:
+                continue
 
             # Event type filter
             if selected_type != "ALL" and str(event.get("event_type")) != selected_type:
@@ -2121,30 +2111,34 @@ elif selected_page == "Security Alerts":
 
     st.markdown(
         """
-        <div class="sx-page-title-row">
-            <div class="sx-page-title">🚨 Security Alerts & Risk Detections</div>
-            <div class="sx-chips-row">
-                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>MULTI-FACTOR SCORING</span>
-                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>CORRELATION HUB</span>
+        <div style="margin-bottom: 12px;">
+            <div style="font-size: 1.30rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.2px;">
+                SECURITY ALERTS
             </div>
-        </div>
-        <div class="sx-page-desc">
-            Prioritized detections generated by SentinelX heuristic engines and enriched by dynamic multi-factor risk scoring.
+            <div style="font-size: 0.76rem; color: #94A3B8; margin-top: 2px;">
+                Prioritized detections generated by SentinelX detection engines and risk scoring.
+            </div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
     # ----------------------------------------------
-    # ALERT SUMMARY
+    # ALERT SUMMARY (TOP KPI ROW)
     # ----------------------------------------------
 
     alert_summary_col1, alert_summary_col2, alert_summary_col3 = st.columns(3)
 
     with alert_summary_col1:
-        st.metric(
-            "Total Alerts",
-            len(risk_alerts)
+        st.markdown(
+            render_kpi_card(
+                "Total Alerts",
+                len(risk_alerts),
+                "Active detection events",
+                accent_color="#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>'
+            ),
+            unsafe_allow_html=True
         )
 
     with alert_summary_col2:
@@ -2152,21 +2146,33 @@ elif selected_page == "Security Alerts":
             1 for alert in risk_alerts
             if alert.get("risk_level") in ["HIGH", "CRITICAL"]
         )
-        st.metric(
-            "High / Critical Priority",
-            high_critical_count
+        st.markdown(
+            render_kpi_card(
+                "High / Critical",
+                high_critical_count,
+                "Priority threat detections",
+                accent_color="#F97316" if high_critical_count > 0 else "#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+            ),
+            unsafe_allow_html=True
         )
 
     with alert_summary_col3:
-        detection_types = len(
+        detection_types_count = len(
             set(
-                alert.get("alert_type", "UNKNOWN")
+                normalize_alert_type(alert.get("alert_type", "UNKNOWN"))
                 for alert in risk_alerts
             )
         )
-        st.metric(
-            "Detection Types",
-            detection_types
+        st.markdown(
+            render_kpi_card(
+                "Detection Types",
+                detection_types_count,
+                "Synchronized engine rules",
+                accent_color="#818CF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+            ),
+            unsafe_allow_html=True
         )
 
     st.divider()
@@ -2175,12 +2181,12 @@ elif selected_page == "Security Alerts":
     # FILTER CONTROLS
     # ----------------------------------------------
 
-    filter_alerts_col1, filter_alerts_col2 = st.columns([2, 1])
+    filter_alerts_col1, filter_alerts_col2, filter_alerts_col3 = st.columns([1.5, 1, 1])
 
     with filter_alerts_col1:
         alerts_search = st.text_input(
             "Search Alerts",
-            placeholder="Search by IP, title, or detection type...",
+            placeholder="Search by IP, title, detection...",
             key="filter_alerts_search"
         ).strip().lower()
 
@@ -2191,6 +2197,14 @@ elif selected_page == "Security Alerts":
             key="filter_alerts_sev"
         )
 
+    unique_alert_types = ["ALL"] + sorted(list(set(normalize_alert_type(a.get("alert_type", "UNKNOWN")) for a in risk_alerts)))
+    with filter_alerts_col3:
+        alerts_type_filter = st.selectbox(
+            "Filter by Detection Type",
+            unique_alert_types,
+            key="filter_alerts_type"
+        )
+
     # ----------------------------------------------
     # FILTER ALERTS LIST
     # ----------------------------------------------
@@ -2199,6 +2213,10 @@ elif selected_page == "Security Alerts":
     for alert in risk_alerts:
         risk_level = alert.get("risk_level", "LOW")
         if alerts_sev_filter != "ALL" and risk_level != alerts_sev_filter:
+            continue
+
+        alert_t = normalize_alert_type(alert.get("alert_type", "UNKNOWN"))
+        if alerts_type_filter != "ALL" and alert_t != alerts_type_filter:
             continue
 
         if alerts_search:
@@ -2366,15 +2384,13 @@ elif selected_page == "Incidents":
 
     st.markdown(
         """
-        <div class="sx-page-title-row">
-            <div class="sx-page-title">🛡️ Incident Management & Containment Console</div>
-            <div class="sx-chips-row">
-                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>AUTO-CONTAINMENT READY</span>
-                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
+        <div style="margin-bottom: 12px;">
+            <div style="font-size: 1.30rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.2px;">
+                INCIDENT RESPONSE CENTER
             </div>
-        </div>
-        <div class="sx-page-desc">
-            Investigate correlated security threats, track investigation lifecycle states, and orchestrate policy-controlled containment.
+            <div style="font-size: 0.76rem; color: #94A3B8; margin-top: 2px;">
+                Investigate correlated security threats, track investigation lifecycle states, and orchestrate policy-controlled containment.
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -2387,20 +2403,56 @@ elif selected_page == "Incidents":
         inc_kpi1, inc_kpi2, inc_kpi3, inc_kpi4 = st.columns(4)
 
         with inc_kpi1:
-            st.metric("Total Incidents", len(incidents))
+            st.markdown(
+                render_kpi_card(
+                    "Total Incidents",
+                    len(incidents),
+                    "Forensic incident ledger",
+                    accent_color="#38BDF8",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         with inc_kpi2:
-            st.metric("Active Incidents", active_incidents)
+            st.markdown(
+                render_kpi_card(
+                    "Active Incidents",
+                    active_incidents,
+                    "Open response workflow",
+                    accent_color="#EF4444" if active_incidents > 0 else "#10B981",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         with inc_kpi3:
-            st.metric("Contained Threats", contained_incidents)
+            st.markdown(
+                render_kpi_card(
+                    "Contained Threats",
+                    contained_incidents,
+                    "Automated quarantine",
+                    accent_color="#10B981",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         with inc_kpi4:
             high_sev_incidents = sum(
                 1 for i in incidents
                 if i.get("severity") in ["HIGH", "CRITICAL"] or (i.get("risk_score") or 0) >= 80
             )
-            st.metric("High / Critical Threats", high_sev_incidents)
+            st.markdown(
+                render_kpi_card(
+                    "High / Critical Threats",
+                    high_sev_incidents,
+                    "Priority escalations",
+                    accent_color="#F97316" if high_sev_incidents > 0 else "#38BDF8",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         st.divider()
 
@@ -2974,15 +3026,13 @@ elif selected_page == "MITRE ATT&CK":
 
     st.markdown(
         """
-        <div class="sx-page-title-row">
-            <div class="sx-page-title">🎯 MITRE ATT&CK® Threat Matrix & Trace</div>
-            <div class="sx-chips-row">
-                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>ENTERPRISE MATRIX</span>
-                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>TACTIC TRACE</span>
+        <div style="margin-bottom: 12px;">
+            <div style="font-size: 1.30rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.2px;">
+                MITRE ATT&CK
             </div>
-        </div>
-        <div class="sx-page-desc">
-            Adversary Tactics, Techniques, and Common Knowledge (ATT&CK) mapping for SentinelX detection engines with verified evidence linking.
+            <div style="font-size: 0.76rem; color: #94A3B8; margin-top: 2px;">
+                Adversary Tactics, Techniques, and Common Knowledge (ATT&CK) threat matrix and trace flows.
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -3047,11 +3097,38 @@ elif selected_page == "MITRE ATT&CK":
 
     m_col1, m_col2, m_col3 = st.columns(3)
     with m_col1:
-        st.metric("Mapped Techniques", len(mitre_mapping))
+        st.markdown(
+            render_kpi_card(
+                "Mapped Techniques",
+                len(mitre_mapping),
+                "Enterprise framework",
+                accent_color="#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 16 12 12 8"/></svg>'
+            ),
+            unsafe_allow_html=True
+        )
     with m_col2:
-        st.metric("Active Adversary Techniques", len(active_techniques))
+        st.markdown(
+            render_kpi_card(
+                "Active TTPs",
+                len(active_techniques),
+                "Observed adversary behavior",
+                accent_color="#F97316" if len(active_techniques) > 0 else "#38BDF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+            ),
+            unsafe_allow_html=True
+        )
     with m_col3:
-        st.metric("Correlated Risk Detections", len(risk_alerts))
+        st.markdown(
+            render_kpi_card(
+                "Correlated Alerts",
+                len(risk_alerts),
+                "Heuristic rule detections",
+                accent_color="#818CF8",
+                icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>'
+            ),
+            unsafe_allow_html=True
+        )
 
     st.divider()
 
@@ -3162,15 +3239,13 @@ elif selected_page == "Audit Logs":
 
     st.markdown(
         """
-        <div class="sx-page-title-row">
-            <div class="sx-page-title">📋 Containment & Forensics Audit Trail</div>
-            <div class="sx-chips-row">
-                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>IMMUTABLE LEDGER</span>
-                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>COMPLIANCE READY</span>
+        <div style="margin-bottom: 12px;">
+            <div style="font-size: 1.30rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.2px;">
+                AUDIT LOGS
             </div>
-        </div>
-        <div class="sx-page-desc">
-            Forensic audit trail of all automated containment commands, policy decisions, and host isolation events.
+            <div style="font-size: 0.76rem; color: #94A3B8; margin-top: 2px;">
+                Forensic audit trail of all automated containment commands, policy decisions, and host isolation events.
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -3190,16 +3265,52 @@ elif selected_page == "Audit Logs":
         stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
 
         with stat_col1:
-            st.metric("Total Containment Actions", len(containment_actions))
+            st.markdown(
+                render_kpi_card(
+                    "Total Actions",
+                    len(containment_actions),
+                    "Forensic audit ledger",
+                    accent_color="#38BDF8",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         with stat_col2:
-            st.metric("Successful Mitigations", successful_actions)
+            st.markdown(
+                render_kpi_card(
+                    "Successful Mitigations",
+                    successful_actions,
+                    "Verified policy executions",
+                    accent_color="#10B981",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         with stat_col3:
-            st.metric("Failed / Errors", failed_actions)
+            st.markdown(
+                render_kpi_card(
+                    "Failed / Errors",
+                    failed_actions,
+                    "Policy exceptions",
+                    accent_color="#EF4444" if failed_actions > 0 else "#10B981",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         with stat_col4:
-            st.metric("Isolated Host Entities", unique_targets)
+            st.markdown(
+                render_kpi_card(
+                    "Isolated Entities",
+                    unique_targets,
+                    "Quarantined hosts",
+                    accent_color="#F97316" if unique_targets > 0 else "#38BDF8",
+                    icon_svg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+                ),
+                unsafe_allow_html=True
+            )
 
         st.divider()
 
