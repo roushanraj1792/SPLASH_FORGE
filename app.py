@@ -24,6 +24,10 @@ from services.forensics import (
     generate_forensic_dossier_json,
     generate_forensic_dossier_markdown
 )
+from services.auth import (
+    init_auth_table,
+    authenticate_user
+)
 
 from detection.brute_force import detect_brute_force
 from detection.port_scan import detect_port_scan
@@ -943,6 +947,84 @@ def normalize_alert_type(alert_type):
 
 initialize_database()
 initialize_containment_tables()
+init_auth_table()
+
+
+# ==================================================
+# AUTHENTICATION & MULTI-USER SESSION GATE
+# ==================================================
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
+
+if not st.session_state.authenticated:
+    st.markdown(
+        """
+        <div style="max-width: 480px; margin: 30px auto 14px; text-align: center;">
+            <div class="sx-brand-wrapper" style="justify-content: center; margin-bottom: 10px;">
+                <svg width="56" height="56" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M24 3.5L7 10.5V22C7 33.2 14.3 43.5 24 46C33.7 43.5 41 33.2 41 22V10.5L24 3.5Z" stroke="#38BDF8" stroke-width="2.4" stroke-linejoin="round" fill="rgba(56, 189, 248, 0.08)"/>
+                    <path d="M24 8L11.5 13.8V22C11.5 30.5 16.8 38.3 24 40.8C31.2 38.3 36.5 30.5 36.5 22V13.8L24 8Z" stroke="rgba(99, 102, 241, 0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+                    <path d="M16.5 17.5L31.5 30.5M31.5 17.5L16.5 30.5" stroke="#38BDF8" stroke-width="2.8" stroke-linecap="round"/>
+                    <circle cx="24" cy="24" r="3.2" fill="#38BDF8" stroke="#0A111C" stroke-width="1.6"/>
+                </svg>
+            </div>
+            <div style="font-size: 1.55rem; font-weight: 900; letter-spacing: 2px; color: #F8FAFC;">
+                SENTINEL<span style="color: #38BDF8;">X</span>
+            </div>
+            <div style="font-size: 0.74rem; font-weight: 700; letter-spacing: 1.2px; color: #94A3B8; text-transform: uppercase; margin-bottom: 20px;">
+                Autonomous Security Operations Center
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    _, login_col, _ = st.columns([1, 1.4, 1])
+    with login_col:
+        with st.container():
+            st.markdown(
+                """
+                <div class="sx-panel" style="padding: 20px 22px; margin-bottom: 12px;">
+                    <div style="font-size: 0.82rem; font-weight: 800; color: #38BDF8; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px;">
+                        🔐 Analyst Access Gateway
+                    </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            login_user = st.text_input("Username", key="login_username", placeholder="analyst or admin")
+            login_pass = st.text_input("Password", key="login_password", type="password", placeholder="Enter password")
+
+            if st.button("Access SentinelX SOC", type="primary", use_container_width=True, key="btn_login_submit"):
+                user_obj = authenticate_user(login_user, login_pass)
+                if user_obj:
+                    st.session_state.authenticated = True
+                    st.session_state.current_user = user_obj
+                    st.session_state.selected_page = "Dashboard"
+                    st.success(f"Authenticated as {user_obj['username'].upper()} ({user_obj['role']})")
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials. Please verify your username and password.")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            with st.expander("🔑 Demo Access Credentials (Judges & Team)", expanded=True):
+                st.markdown(
+                    """
+                    <div style="font-size: 0.78rem; line-height: 1.6; color: #94A3B8;">
+                        <b>SOC Analyst Account</b> (Triage, investigate & export):<br>
+                        <code>analyst</code> / <code>SentinelX@Analyst2026</code><br><br>
+                        <b>SOC Administrator Account</b> (Full response & containment):<br>
+                        <code>admin</code> / <code>SentinelX@Admin2026</code>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+    st.stop()
 
 
 # ==================================================
@@ -953,9 +1035,12 @@ if "selected_page" not in st.session_state:
     st.session_state.selected_page = "Dashboard"
 
 selected_page = st.session_state.selected_page
+current_user = st.session_state.current_user or {"username": "analyst", "role": "ANALYST"}
+user_disp = str(current_user.get("username", "analyst")).upper()
+role_disp = str(current_user.get("role", "ANALYST")).upper()
 
 st.markdown(
-    """
+    f"""
     <div class="sx-top-header">
         <div class="sx-brand-wrapper">
             <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
@@ -974,6 +1059,9 @@ st.markdown(
                 <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
                 <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
                 <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>CONTAINMENT READY</span>
+                <span class="sx-chip sx-chip-indigo" style="border:1px solid rgba(56,189,248,0.4); color:#38BDF8;">
+                    👤 {user_disp} [{role_disp}]
+                </span>
             </div>
             <div style="color:#64748B; font-size:0.68rem; font-family:ui-monospace, monospace; letter-spacing:0.6px; margin-top:3px;">
                 ● TELEMETRY STREAM ACTIVE • SQLITE WAL ENGINE
@@ -993,7 +1081,7 @@ nav_items = [
     ("Audit Logs", "Audit Logs", "nav_audit")
 ]
 
-nav_cols = st.columns([1, 1, 1, 1, 1, 1, 1])
+nav_cols = st.columns([1, 1, 1, 1, 1, 1, 0.9, 0.9])
 
 for col, (label, page, key) in zip(nav_cols[:6], nav_items):
     with col:
@@ -1013,6 +1101,16 @@ with nav_cols[6]:
         use_container_width=True,
         key="nav_refresh_telemetry"
     ):
+        st.rerun()
+
+with nav_cols[7]:
+    if st.button(
+        "🚪 Logout",
+        use_container_width=True,
+        key="nav_logout_btn"
+    ):
+        st.session_state.authenticated = False
+        st.session_state.current_user = None
         st.rerun()
 
 
