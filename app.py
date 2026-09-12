@@ -443,7 +443,8 @@ st.markdown(
     }
 
     /* Buttons */
-    .stButton > button {
+    .stButton > button,
+    .stDownloadButton > button {
         background: #142032 !important;
         color: #94A3B8 !important;
         border: 1px solid #1E2E44 !important;
@@ -452,22 +453,25 @@ st.markdown(
         font-weight: 600 !important;
         font-size: 0.80rem !important;
         letter-spacing: 0.2px !important;
-        transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease !important;
+        transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
     }
 
-    .stButton > button:hover {
+    .stButton > button:hover,
+    .stDownloadButton > button:hover {
         background: #19273C !important;
-        border-color: #2D486B !important;
-        color: #F1F5F9 !important;
+        border-color: #38BDF8 !important;
+        color: #F8FAFC !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.18) !important;
     }
 
     .stButton > button[kind="primary"],
+    .stDownloadButton > button[kind="primary"],
     [data-testid="baseButton-primary"] {
-        background: #142840 !important;
+        background: #0F2942 !important;
         border: 1px solid #38BDF8 !important;
         color: #38BDF8 !important;
         font-weight: 700 !important;
-        box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.25) !important;
     }
 
     /* Native Streamlit Metric Cards */
@@ -609,6 +613,50 @@ st.markdown(
     li[aria-selected="true"] {
         background: #142032 !important;
         color: #38BDF8 !important;
+    }
+
+    /* Tabs */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        background: #0E1726 !important;
+        border-bottom: 1px solid #1E2E44 !important;
+        gap: 8px !important;
+    }
+
+    [data-testid="stTabs"] [data-baseweb="tab"] {
+        color: #94A3B8 !important;
+        font-weight: 600 !important;
+        font-size: 0.82rem !important;
+        padding: 8px 14px !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+        color: #38BDF8 !important;
+    }
+
+    [data-testid="stTabs"] [aria-selected="true"] {
+        color: #38BDF8 !important;
+        border-bottom: 2px solid #38BDF8 !important;
+    }
+
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+        background-color: #38BDF8 !important;
+    }
+
+    /* Text Area */
+    .stTextArea textarea {
+        background: #142032 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 5px !important;
+        color: #F8FAFC !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-size: 0.80rem !important;
+    }
+
+    .stTextArea textarea:focus {
+        border-color: #38BDF8 !important;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.22) !important;
     }
 
     /* Alerts */

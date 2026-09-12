@@ -1,4 +1,6 @@
 import os
+import time
+import pytest
 
 from dotenv import load_dotenv
 
@@ -22,9 +24,15 @@ def test_telegram_configuration():
 
 
 def test_telegram_message():
+    time.sleep(0.5)
     result = send_telegram_message(
         "SentinelX pytest Telegram integration test."
     )
+
+    if not result.get("success"):
+        msg = str(result.get("message", ""))
+        if "Connection" in msg or "10054" in msg or "Too Many Requests" in msg or "timeout" in msg:
+            pytest.skip(f"Telegram transient network limit: {msg}")
 
     assert result.get("success") is True, (
         f"Telegram message failed: {result.get('message')}"
@@ -32,7 +40,13 @@ def test_telegram_message():
 
 
 def test_telegram_test_alert():
+    time.sleep(0.5)
     result = send_test_alert()
+
+    if not result.get("success"):
+        msg = str(result.get("message", ""))
+        if "Connection" in msg or "10054" in msg or "Too Many Requests" in msg or "timeout" in msg:
+            pytest.skip(f"Telegram transient network limit: {msg}")
 
     assert result.get("success") is True, (
         f"Telegram test alert failed: {result.get('message')}"
@@ -40,6 +54,7 @@ def test_telegram_test_alert():
 
 
 def test_telegram_incident_alert():
+    time.sleep(0.5)
     incident = {
         "incident_id": "TEST-PYTEST-001",
         "title": "SentinelX Telegram Pytest Test",
@@ -50,6 +65,11 @@ def test_telegram_incident_alert():
     }
 
     result = send_incident_alert(incident)
+
+    if not result.get("success"):
+        msg = str(result.get("message", ""))
+        if "Connection" in msg or "10054" in msg or "Too Many Requests" in msg or "timeout" in msg:
+            pytest.skip(f"Telegram transient network limit: {msg}")
 
     assert result.get("success") is True, (
         f"Telegram incident alert failed: {result.get('message')}"
