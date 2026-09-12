@@ -1,5 +1,7 @@
 import os
 import json
+import re
+from datetime import datetime
 from typing import Dict, List, Any
 
 from dotenv import load_dotenv
@@ -63,6 +65,175 @@ def normalize_events(events: List[Any]) -> List[Dict]:
             normalized.append(event_data)
 
     return normalized
+
+
+# ============================================================
+# GROUNDED IOC & OBSERVABLE INDICATOR EXTRACTION
+# ============================================================
+
+def extract_incident_iocs(
+    incident: Dict,
+    events: List[Dict]
+) -> Dict[str, Any]:
+    """
+    Extract strictly grounded observable indicators (IOCs) from
+    incident and correlated events.
+    Never hallucinates or invents indicators outside the supplied evidence.
+    """
+
+    incident_data = normalize_record(incident)
+    normalized_events = normalize_events(events)
+
+    source_ips = set()
+    if incident_data.get("source_ip"):
+        source_ips.add(str(incident_data["source_ip"]).strip())
+
+    usernames = set()
+    ports = set()
+    event_types = set()
+    actions = set()
+    timestamps = []
+
+    for ev in normalized_events:
+        ip = ev.get("source_ip")
+        if ip and str(ip).strip():
+            source_ips.add(str(ip).strip())
+
+        user = ev.get("username")
+        if user and str(user).strip() not in ["", "—", "None", "null", "N/A"]:
+            usernames.add(str(user).strip())
+
+        port = ev.get("port")
+        if port is not None and str(port).strip() not in ["", "—", "None", "null"]:
+            try:
+                ports.add(int(port))
+            except (ValueError, TypeError):
+                ports.add(str(port).strip())
+
+        ev_type = ev.get("event_type")
+        if ev_type and str(ev_type).strip():
+            event_types.add(str(ev_type).strip())
+
+        action = ev.get("action")
+        if action and str(action).strip():
+            actions.add(str(action).strip())
+
+        ts = ev.get("timestamp")
+        if ts and str(ts).strip():
+            timestamps.append(str(ts).strip())
+
+    timestamps.sort()
+
+    return {
+        "source_ips": sorted(list(source_ips)),
+        "usernames": sorted(list(usernames)),
+        "targeted_ports": sorted(
+            list(ports),
+            key=lambda x: (isinstance(x, str), x)
+        ),
+        "observed_event_types": sorted(list(event_types)),
+        "observed_actions": sorted(list(actions)),
+        "earliest_seen": (
+            timestamps[0]
+            if timestamps
+            else "Not available in supplied evidence."
+        ),
+        "latest_seen": (
+            timestamps[-1]
+            if timestamps
+            else "Not available in supplied evidence."
+        ),
+        "evidence_event_count": len(normalized_events)
+    }
+
+
+# ============================================================
+# CHRONOLOGICAL ATTACK CHAIN / THREAT TIMELINE
+# ============================================================
+
+def build_incident_timeline(
+    events: List[Dict]
+) -> List[Dict]:
+    """
+    Construct a chronological attack chain timeline from correlated evidence.
+    Computes relative time offset (T+Xs) and classifies attack progression stage.
+    """
+
+    normalized_events = normalize_events(events)
+    if not normalized_events:
+        return []
+
+    parsed_events = []
+    for ev in normalized_events:
+        ts_raw = ev.get("timestamp")
+        dt_obj = None
+        if ts_raw:
+            try:
+                clean_ts = str(ts_raw).replace("Z", "+00:00")
+                dt_obj = datetime.fromisoformat(clean_ts)
+            except Exception:
+                dt_obj = None
+        parsed_events.append((dt_obj, ts_raw or "", ev))
+
+    # Sort ascending chronologically
+    parsed_events.sort(
+        key=lambda item: (item[0] is None, item[0] or item[1])
+    )
+
+    base_dt = next(
+        (item[0] for item in parsed_events if item[0] is not None),
+        None
+    )
+
+    timeline = []
+    for idx, (dt_obj, ts_str, ev) in enumerate(parsed_events, 1):
+        if base_dt and dt_obj:
+            delta_sec = int((dt_obj - base_dt).total_seconds())
+            delta_str = (
+                f"T+{delta_sec}s"
+                if delta_sec >= 0
+                else f"T{delta_sec}s"
+            )
+        else:
+            delta_str = f"T+{idx}s"
+
+        ev_type = str(ev.get("event_type", "")).upper()
+        action = str(ev.get("action", "")).upper()
+        status = str(ev.get("status", "")).upper()
+        msg = ev.get("message", "")
+
+        # Classify attack progression milestone
+        if "PORT_SCAN" in ev_type or "SCAN" in action:
+            stage = "Reconnaissance / Service Discovery"
+        elif "POWERSHELL" in ev_type or "POWERSHELL" in action or "EXEC" in action:
+            stage = "Execution / Suspicious Command"
+        elif "PRIVILEGE" in ev_type or "SUDO" in action or "ADMIN" in action:
+            stage = "Privilege Escalation Attempt"
+        elif "LOGIN" in ev_type or "AUTH" in ev_type:
+            if status == "SUCCESS":
+                stage = "Initial Access / Account Compromise"
+            else:
+                stage = "Credential Access / Brute-Force Attempt"
+        elif status in ["FAILED", "DENIED", "BLOCKED"]:
+            stage = "Unauthorized Access Attempt"
+        else:
+            stage = "Correlated Threat Telemetry"
+
+        timeline.append({
+            "step": idx,
+            "timestamp": ts_str or "Not available in supplied evidence.",
+            "delta_str": delta_str,
+            "stage": stage,
+            "source_ip": ev.get("source_ip", "Unknown"),
+            "username": ev.get("username") or "—",
+            "event_type": ev.get("event_type", "UNKNOWN"),
+            "action": ev.get("action", "UNKNOWN"),
+            "status": ev.get("status", "UNKNOWN"),
+            "port": ev.get("port"),
+            "message": msg or f"{action} ({status})"
+        })
+
+    return timeline
 
 
 # ============================================================
@@ -238,11 +409,42 @@ def generate_rule_based_analysis(
         "Document the investigation and response actions."
     ]
 
+    iocs = extract_incident_iocs(incident_data, normalized_events)
+    timeline = build_incident_timeline(normalized_events)
+
+    time_range_str = (
+        f"between {iocs['earliest_seen']} and {iocs['latest_seen']}"
+        if iocs["earliest_seen"] != iocs["latest_seen"]
+        else f"at {iocs['earliest_seen']}"
+    )
+
+    what_happened = (
+        f"SentinelX correlated {len(normalized_events)} security event(s) originating "
+        f"from source {source_ip} demonstrating {alert_type} patterns {time_range_str}."
+    )
+
+    why_suspicious = (
+        f"Observed behavior deviates from baseline security thresholds with {alert_type} activity "
+        f"(Risk Score: {risk_score}/100, Severity: {severity}). The activity directly maps to "
+        f"MITRE ATT&CK technique {mitre} identified by the SentinelX detection engine."
+    )
+
+    verification_guidance = [
+        "Verify source IP containment status in the SentinelX Active Blocklist registry.",
+        "Inspect subsequent live telemetry feed to confirm 0 ongoing attempts from the quarantined source.",
+        "Check identity logs for affected usernames to ensure credentials remain secure.",
+        "When containment verification is complete or benign activity confirmed, use Reversible Containment to unblock."
+    ]
+
     return {
         "incident_summary": (
             f"SentinelX detected {alert_type} activity "
             f"from {source_ip} based on the supplied security evidence."
         ),
+
+        "what_happened": what_happened,
+
+        "why_suspicious": why_suspicious,
 
         "severity_explanation": (
             f"Risk score is {risk_score}/100 with "
@@ -259,10 +461,50 @@ def generate_rule_based_analysis(
 
         "recommended_response": recommended_response,
 
+        "verification_guidance": verification_guidance,
+
         "evidence_count": len(normalized_events),
+
+        "iocs": iocs,
+
+        "timeline": timeline,
 
         "ai_source": "Rule-Based Fallback"
     }
+
+
+def extract_json_from_text(text: str) -> Dict[str, Any]:
+    """
+    Safely extract and parse JSON from LLM outputs.
+    Handles Markdown code fences (```json ... ```), preamble commentary,
+    and trailing text.
+    """
+    if not text or not isinstance(text, str):
+        raise ValueError("Empty or invalid response received from model.")
+
+    clean_text = text.strip()
+
+    # Pattern 1: Look for markdown code fence with json or generic
+    code_block_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", clean_text, re.IGNORECASE)
+    if code_block_match:
+        block_content = code_block_match.group(1).strip()
+        try:
+            return json.loads(block_content)
+        except json.JSONDecodeError:
+            pass
+
+    # Pattern 2: Find outermost matching curly braces { ... }
+    first_brace = clean_text.find("{")
+    last_brace = clean_text.rfind("}")
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        candidate = clean_text[first_brace:last_brace + 1].strip()
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    # Pattern 3: Direct parsing fallback
+    return json.loads(clean_text)
 
 
 # ============================================================
@@ -345,6 +587,10 @@ Use exactly this structure:
 {{
     "incident_summary": "Evidence-based summary using only facts explicitly present in the supplied incident and events.",
 
+    "what_happened": "Factual narrative of what occurred based strictly on the supplied evidence.",
+
+    "why_suspicious": "Explain why this activity is suspicious based only on the supplied incident metrics and events.",
+
     "severity_explanation": "Explain the supplied severity and risk score using only the available evidence.",
 
     "mitre_explanation": "Explain the mapped MITRE ATT&CK technique using general defensive knowledge. Do not invent incident-specific facts.",
@@ -360,6 +606,11 @@ Use exactly this structure:
         "Defensive recommendation 1",
         "Defensive recommendation 2",
         "Defensive recommendation 3"
+    ],
+
+    "verification_guidance": [
+        "Verification step 1 to validate containment and recovery",
+        "Verification step 2"
     ]
 }}
 """
@@ -369,15 +620,7 @@ Use exactly this structure:
         contents=prompt
     )
 
-    text = response.text.strip()
-
-    # Remove Markdown code fences if Gemini adds them.
-    if text.startswith("```"):
-        text = text.replace("```json", "")
-        text = text.replace("```", "")
-        text = text.strip()
-
-    result = json.loads(text)
+    result = extract_json_from_text(response.text)
 
     required_fields = [
         "incident_summary",
@@ -409,6 +652,23 @@ Use exactly this structure:
             "recommended_response must be a list."
         )
 
+    # Safe defaults for enhanced workflow fields if omitted
+    if "what_happened" not in result or not result["what_happened"]:
+        result["what_happened"] = result["incident_summary"]
+
+    if "why_suspicious" not in result or not result["why_suspicious"]:
+        result["why_suspicious"] = result["severity_explanation"]
+
+    if (
+        "verification_guidance" not in result
+        or not isinstance(result["verification_guidance"], list)
+    ):
+        result["verification_guidance"] = [
+            "Verify host IP containment status in SentinelX Active Blocklist.",
+            "Monitor incoming telemetry to confirm 0 ongoing attempts from source.",
+            "Review identity audit logs for targeted usernames to confirm safety."
+        ]
+
     result["evidence_count"] = len(
         normalized_events
     )
@@ -431,6 +691,7 @@ def analyze_incident(
 
     Gemini is attempted first.
     If Gemini fails, deterministic fallback is returned.
+    Observable IOCs and attack chain timeline are always attached.
     """
 
     incident_data = normalize_record(
@@ -446,6 +707,15 @@ def analyze_incident(
         normalized_events
     )
 
+    iocs = extract_incident_iocs(
+        incident_data,
+        normalized_events
+    )
+
+    timeline = build_incident_timeline(
+        normalized_events
+    )
+
     try:
 
         analysis = generate_gemini_analysis(
@@ -454,6 +724,8 @@ def analyze_incident(
         )
 
         analysis["context"] = context
+        analysis["iocs"] = iocs
+        analysis["timeline"] = timeline
 
         return analysis
 
@@ -465,7 +737,8 @@ def analyze_incident(
         )
 
         fallback["context"] = context
-
+        fallback["iocs"] = iocs
+        fallback["timeline"] = timeline
         fallback["ai_error"] = str(error)
 
         return fallback

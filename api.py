@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from database.database import initialize_database, insert_event
@@ -376,14 +377,14 @@ class SentinelXIngestionHandler(BaseHTTPRequestHandler):
         # NORMALIZE EVENT
         # ------------------------------------------
 
+        raw_ts = payload.get("timestamp")
+        clean_ts = str(raw_ts).strip() if raw_ts is not None else ""
+        if not clean_ts or clean_ts.lower() in ("none", "null"):
+            clean_ts = datetime.now().isoformat()
+
         event = {
 
-            "timestamp": str(
-                payload.get(
-                    "timestamp",
-                    ""
-                )
-            ).strip(),
+            "timestamp": clean_ts,
 
             "source_ip": source_ip,
 

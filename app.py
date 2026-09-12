@@ -1,3 +1,6 @@
+import json
+from datetime import datetime
+
 import streamlit as st
 
 from database.database import (
@@ -12,7 +15,15 @@ from database.database import (
     get_incident_status_history
 )
 
-from services.ai_copilot import analyze_incident
+from services.ai_copilot import (
+    analyze_incident,
+    extract_incident_iocs,
+    build_incident_timeline
+)
+from services.forensics import (
+    generate_forensic_dossier_json,
+    generate_forensic_dossier_markdown
+)
 
 from detection.brute_force import detect_brute_force
 from detection.port_scan import detect_port_scan
@@ -32,7 +43,24 @@ from services.telegram_alert import send_incident_alert
 from services.containment import (
     initialize_containment_tables,
     block_source_ip,
-    get_containment_actions
+    unblock_source_ip,
+    is_source_blocked,
+    get_blocked_sources,
+    get_containment_actions,
+    get_source_containment_details,
+    verify_source_containment,
+)
+
+from simulator.event_generator import simulate_brute_force
+from simulator.port_scan_simulator import simulate_port_scan
+from simulator.suspicious_auth_simulator import (
+    simulate_suspicious_authentication
+)
+from simulator.privilege_escalation_simulator import (
+    generate_privilege_escalation_events
+)
+from simulator.suspicious_powershell_simulator import (
+    generate_suspicious_powershell_events
 )
 
 
@@ -51,13 +79,15 @@ st.markdown(
     """
     <style>
     :root {
-        --sx-bg: #0A111C;
-        --sx-panel: #101B2B;
-        --sx-panel-2: #152336;
-        --sx-border: #1E3148;
-        --sx-border-light: rgba(30, 49, 72, 0.6);
+        --sx-bg: #090D16;
+        --sx-panel: #0E1726;
+        --sx-panel-2: #142032;
+        --sx-surface: #19273C;
+        --sx-border: #1E2E44;
+        --sx-border-light: rgba(30, 46, 68, 0.7);
         --sx-text: #F1F5F9;
         --sx-muted: #94A3B8;
+        --sx-dim: #64748B;
         --sx-accent: #38BDF8;
         --sx-secondary: #6366F1;
         --sx-critical: #EF4444;
@@ -69,13 +99,13 @@ st.markdown(
 
     /* Global Application Shell */
     [data-testid="stAppViewContainer"] {
-        background: #0A111C !important;
+        background: #090D16 !important;
         color: #F1F5F9 !important;
     }
 
     [data-testid="stHeader"] {
-        background: rgba(10, 17, 28, 0.92) !important;
-        backdrop-filter: blur(6px) !important;
+        background: rgba(9, 13, 22, 0.95) !important;
+        backdrop-filter: blur(8px) !important;
     }
 
     section[data-testid="stSidebar"],
@@ -87,11 +117,11 @@ st.markdown(
         max-width: 1540px !important;
         width: 100% !important;
         margin: 0 auto !important;
-        padding: 12px 24px 32px !important;
+        padding: 10px 20px 28px !important;
         color: #F1F5F9 !important;
     }
 
-    /* Clean Headings & Typography */
+    /* Typography Hierarchy */
     h1, h2, h3, h4, h5, h6 {
         color: #F1F5F9 !important;
         font-weight: 700 !important;
@@ -99,13 +129,14 @@ st.markdown(
     }
 
     h1 {
-        font-size: 1.50rem !important;
-        padding-bottom: 2px !important;
+        font-size: 1.35rem !important;
+        margin-bottom: 2px !important;
     }
 
     h2, h3 {
-        font-size: 1.18rem !important;
-        margin-top: 8px !important;
+        font-size: 1.10rem !important;
+        margin-top: 6px !important;
+        margin-bottom: 4px !important;
     }
 
     .stCaption, p, span, label, [data-testid="stMarkdownContainer"] p {
@@ -114,13 +145,13 @@ st.markdown(
 
     .stCaption {
         color: #94A3B8 !important;
-        font-size: 0.80rem !important;
+        font-size: 0.78rem !important;
     }
 
     hr {
-        border-color: #1E3148 !important;
-        opacity: 0.7 !important;
-        margin: 16px 0 !important;
+        border-color: #1E2E44 !important;
+        opacity: 0.6 !important;
+        margin: 12px 0 !important;
     }
 
     /* Top Command Header & Brand Lockup */
@@ -128,39 +159,39 @@ st.markdown(
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
-        padding: 12px 20px;
-        margin-bottom: 12px;
-        border-radius: 8px;
-        background: #101B2B !important;
-        border: 1px solid #1E3148 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        gap: 16px;
+        padding: 10px 18px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background: #0E1726 !important;
+        border: 1px solid #1E2E44 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
     .sx-brand-wrapper {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
     }
 
     .sx-brand-text {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 1px;
     }
 
     .sx-brand-title {
-        font-size: 1.40rem;
+        font-size: 1.30rem;
         font-weight: 900;
-        letter-spacing: 2px;
+        letter-spacing: 1.8px;
         color: #F8FAFC;
         line-height: 1.1;
     }
 
     .sx-brand-sub {
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         font-weight: 700;
-        letter-spacing: 1.4px;
+        letter-spacing: 1.2px;
         color: #94A3B8;
         text-transform: uppercase;
     }
@@ -168,44 +199,43 @@ st.markdown(
     .sx-chips-row {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 4px;
+        gap: 6px;
         flex-wrap: wrap;
     }
 
     .sx-chip {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.62rem;
+        gap: 5px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-size: 0.60rem;
         font-weight: 700;
-        letter-spacing: 0.8px;
+        letter-spacing: 0.6px;
         text-transform: uppercase;
     }
 
     .sx-chip-green {
-        background: rgba(16, 185, 129, 0.12);
-        border: 1px solid rgba(16, 185, 129, 0.35);
+        background: rgba(16, 185, 129, 0.10);
+        border: 1px solid rgba(16, 185, 129, 0.30);
         color: #10B981;
     }
 
     .sx-chip-indigo {
-        background: rgba(99, 102, 241, 0.12);
-        border: 1px solid rgba(99, 102, 241, 0.35);
+        background: rgba(99, 102, 241, 0.10);
+        border: 1px solid rgba(99, 102, 241, 0.30);
         color: #818CF8;
     }
 
     .sx-chip-cyan {
-        background: rgba(56, 189, 248, 0.12);
-        border: 1px solid rgba(56, 189, 248, 0.35);
+        background: rgba(56, 189, 248, 0.10);
+        border: 1px solid rgba(56, 189, 248, 0.30);
         color: #38BDF8;
     }
 
     .sx-chip-dot {
-        width: 6px;
-        height: 6px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
         display: inline-block;
     }
@@ -218,36 +248,77 @@ st.markdown(
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 4px;
+        gap: 3px;
         text-align: right;
     }
 
-    .sx-live-badge {
-        display: inline-flex;
+    /* Operations Briefing Bar */
+    .sx-briefing-bar {
+        display: flex;
         align-items: center;
-        gap: 7px;
-        color: #10B981;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.9px;
-        background: rgba(16, 185, 129, 0.08);
-        border: 1px solid rgba(16, 185, 129, 0.25);
-        padding: 3px 10px;
-        border-radius: 4px;
+        justify-content: space-between;
+        gap: 12px;
+        background: #0E1726;
+        border: 1px solid #1E2E44;
+        border-left: 3px solid #38BDF8;
+        border-radius: 6px;
+        padding: 8px 14px;
+        margin-bottom: 12px;
     }
 
-    /* Enterprise Custom KPI Cards */
+    .sx-briefing-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .sx-pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10B981;
+        box-shadow: 0 0 6px #10B981;
+        display: inline-block;
+    }
+
+    .sx-briefing-title {
+        font-size: 0.70rem;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        color: #F1F5F9;
+        text-transform: uppercase;
+    }
+
+    .sx-briefing-divider {
+        color: #38BDF8;
+        font-size: 0.75rem;
+    }
+
+    .sx-briefing-text {
+        color: #94A3B8;
+        font-size: 0.78rem;
+    }
+
+    .sx-briefing-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    /* Enterprise Custom KPI Cards (Compact & Crisp) */
     .sx-kpi-card {
-        background: #101B2B;
-        border: 1px solid #1E3148;
-        border-radius: 8px;
-        padding: 14px 16px;
+        background: #0E1726;
+        border: 1px solid #1E2E44;
+        border-radius: 6px;
+        padding: 10px 14px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 110px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        transition: border-color 0.15s ease, transform 0.15s ease;
+        min-height: 92px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        transition: border-color 0.15s ease;
     }
 
     .sx-kpi-card:hover {
@@ -257,29 +328,29 @@ st.markdown(
     .sx-kpi-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 6px;
+        align-items: center;
+        margin-bottom: 2px;
     }
 
     .sx-kpi-label {
         color: #94A3B8;
-        font-size: 0.68rem;
+        font-size: 0.64rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
+        letter-spacing: 0.7px;
     }
 
     .sx-kpi-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .sx-kpi-value {
-        font-size: 1.95rem;
+        font-size: 1.65rem;
         font-weight: 800;
         line-height: 1.1;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -288,11 +359,11 @@ st.markdown(
 
     .sx-kpi-meta {
         color: #64748B;
-        font-size: 0.70rem;
-        margin-top: 4px;
+        font-size: 0.68rem;
+        margin-top: 2px;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
     }
 
     /* Visual SOC Pipeline Flow */
@@ -300,111 +371,112 @@ st.markdown(
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 4px;
+        gap: 3px;
         overflow-x: auto;
-        padding-bottom: 2px;
+        padding: 2px 0;
     }
 
     .sx-pipe-box {
         flex: 1;
-        min-width: 88px;
-        background: #152336;
-        border: 1px solid #1E3148;
-        border-radius: 6px;
-        padding: 8px 6px;
+        min-width: 82px;
+        background: #142032;
+        border: 1px solid #1E2E44;
+        border-radius: 5px;
+        padding: 6px 4px;
         text-align: center;
         transition: border-color 0.15s ease, background 0.15s ease;
     }
 
     .sx-pipe-box:hover {
         border-color: #38BDF8;
-        background: #1B2C42;
+        background: #19273C;
     }
 
     .sx-pipe-step {
-        font-size: 0.60rem;
+        font-size: 0.58rem;
         font-weight: 800;
         color: #38BDF8;
         font-family: ui-monospace, monospace;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
     }
 
     .sx-pipe-title {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 700;
         color: #F1F5F9;
-        margin: 2px 0;
+        margin: 1px 0;
         white-space: nowrap;
     }
 
     .sx-pipe-sub {
-        font-size: 0.58rem;
+        font-size: 0.56rem;
         color: #64748B;
         white-space: nowrap;
     }
 
     .sx-pipe-arrow {
         color: #38BDF8;
-        font-size: 0.70rem;
+        font-size: 0.66rem;
         font-weight: 700;
         opacity: 0.6;
         user-select: none;
         padding: 0 1px;
     }
 
-    /* Solid Enterprise Panels */
+    /* Panels & Containers */
     .sx-panel {
-        background: #101B2B !important;
-        border: 1px solid #1E3148 !important;
-        border-radius: 8px;
-        padding: 16px 20px;
-        margin-bottom: 12px;
+        background: #0E1726 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] > div {
-        background: #101B2B !important;
-        border: 1px solid #1E3148 !important;
-        border-radius: 8px !important;
-        padding: 16px 20px !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+        background: #0E1726 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 6px !important;
+        padding: 14px 16px !important;
+        margin-bottom: 10px !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18) !important;
     }
 
     /* Buttons */
     .stButton > button {
-        background: #152336 !important;
-        color: #F1F5F9 !important;
-        border: 1px solid #1E3148 !important;
-        border-radius: 6px !important;
-        padding: 8px 14px !important;
+        background: #142032 !important;
+        color: #94A3B8 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 5px !important;
+        padding: 6px 12px !important;
         font-weight: 600 !important;
-        font-size: 0.82rem !important;
+        font-size: 0.80rem !important;
         letter-spacing: 0.2px !important;
-        transition: border-color 0.15s ease, color 0.15s ease !important;
+        transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease !important;
     }
 
     .stButton > button:hover {
-        background: #1B2C42 !important;
-        border-color: #38BDF8 !important;
-        color: #38BDF8 !important;
+        background: #19273C !important;
+        border-color: #2D486B !important;
+        color: #F1F5F9 !important;
     }
 
     .stButton > button[kind="primary"],
     [data-testid="baseButton-primary"] {
-        background: #1B2C42 !important;
-        border-color: #38BDF8 !important;
+        background: #142840 !important;
+        border: 1px solid #38BDF8 !important;
         color: #38BDF8 !important;
         font-weight: 700 !important;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.2) !important;
     }
 
-    /* Enterprise Metric Cards */
+    /* Native Streamlit Metric Cards */
     [data-testid="stMetric"], .stMetric {
-        background: #101B2B !important;
-        border: 1px solid #1E3148 !important;
-        border-radius: 6px !important;
-        padding: 12px 16px !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+        background: #0E1726 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 5px !important;
+        padding: 8px 12px !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
     }
 
     [data-testid="stMetric"]:hover {
@@ -413,80 +485,80 @@ st.markdown(
 
     [data-testid="stMetricLabel"] p {
         color: #94A3B8 !important;
-        font-size: 0.70rem !important;
+        font-size: 0.66rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
-        letter-spacing: 1px !important;
+        letter-spacing: 0.8px !important;
     }
 
     [data-testid="stMetricValue"] {
         color: #F1F5F9 !important;
-        font-size: 1.75rem !important;
+        font-size: 1.55rem !important;
         font-weight: 800 !important;
-        letter-spacing: -0.4px !important;
+        letter-spacing: -0.3px !important;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
     }
 
-    /* DataFrames & Tables */
+    /* High-Density DataFrames & Tables */
     [data-testid="stDataFrame"], [data-testid="stTable"] {
-        border: 1px solid #1E3148 !important;
+        border: 1px solid #1E2E44 !important;
         border-radius: 6px !important;
-        background: #101B2B !important;
+        background: #0E1726 !important;
         overflow: hidden !important;
     }
 
     div[data-testid="stDataFrame"] > div {
-        background: #101B2B !important;
+        background: #0E1726 !important;
     }
 
     table {
-        background: #101B2B !important;
+        background: #0E1726 !important;
         color: #F1F5F9 !important;
         border-collapse: collapse !important;
         width: 100% !important;
     }
 
     th {
-        background: #152336 !important;
+        background: #142032 !important;
         color: #94A3B8 !important;
-        font-size: 0.72rem !important;
+        font-size: 0.70rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.8px !important;
-        padding: 8px 12px !important;
-        border-bottom: 1px solid #1E3148 !important;
+        letter-spacing: 0.7px !important;
+        padding: 7px 10px !important;
+        border-bottom: 1px solid #1E2E44 !important;
     }
 
     td {
-        padding: 8px 12px !important;
-        border-bottom: 1px solid rgba(30, 49, 72, 0.5) !important;
-        font-size: 0.82rem !important;
+        padding: 6px 10px !important;
+        border-bottom: 1px solid rgba(30, 46, 68, 0.5) !important;
+        font-size: 0.80rem !important;
         color: #F1F5F9 !important;
     }
 
     tr:hover td {
-        background: #152336 !important;
+        background: #142032 !important;
     }
 
     /* Expanders */
     [data-testid="stExpander"] {
-        background: #101B2B !important;
-        border: 1px solid #1E3148 !important;
-        border-radius: 6px !important;
-        margin-bottom: 10px !important;
+        background: #0E1726 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 5px !important;
+        margin-bottom: 8px !important;
         overflow: hidden !important;
     }
 
     [data-testid="stExpander"] summary {
         color: #F1F5F9 !important;
         font-weight: 600 !important;
-        font-size: 0.85rem !important;
-        padding: 8px 14px !important;
+        font-size: 0.82rem !important;
+        padding: 7px 12px !important;
     }
 
     [data-testid="stExpander"] summary:hover {
         color: #38BDF8 !important;
-        background: #152336 !important;
+        background: #142032 !important;
     }
 
     [data-testid="stExpander"] summary svg {
@@ -494,26 +566,26 @@ st.markdown(
     }
 
     [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-        padding: 12px 16px !important;
-        border-top: 1px solid #1E3148 !important;
+        padding: 10px 14px !important;
+        border-top: 1px solid #1E2E44 !important;
     }
 
-    /* Selectboxes & Text Inputs */
+    /* Form Controls & Inputs */
     .stSelectbox label, .stTextInput label {
         color: #94A3B8 !important;
-        font-size: 0.72rem !important;
+        font-size: 0.68rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.8px !important;
+        letter-spacing: 0.7px !important;
     }
 
     .stSelectbox div[data-baseweb="select"] > div,
     .stTextInput div[data-baseweb="input"] {
-        background: #152336 !important;
-        border: 1px solid #1E3148 !important;
-        border-radius: 6px !important;
+        background: #142032 !important;
+        border: 1px solid #1E2E44 !important;
+        border-radius: 5px !important;
         color: #F1F5F9 !important;
-        font-size: 0.84rem !important;
+        font-size: 0.82rem !important;
     }
 
     .stSelectbox div[data-baseweb="select"]:hover > div,
@@ -523,74 +595,77 @@ st.markdown(
 
     div[data-baseweb="popover"],
     ul[role="listbox"] {
-        background: #101B2B !important;
-        border: 1px solid #1E3148 !important;
+        background: #0E1726 !important;
+        border: 1px solid #1E2E44 !important;
         color: #F1F5F9 !important;
     }
 
     li[role="option"] {
         color: #F1F5F9 !important;
+        font-size: 0.82rem !important;
     }
 
     li[role="option"]:hover,
     li[aria-selected="true"] {
-        background: #152336 !important;
+        background: #142032 !important;
         color: #38BDF8 !important;
     }
 
-    /* Semantic Alerts & Notifications */
+    /* Alerts */
     .stAlert, [data-testid="stAlert"] {
-        border-radius: 6px !important;
+        border-radius: 5px !important;
         border-width: 1px !important;
         font-weight: 600 !important;
-        font-size: 0.82rem !important;
-        padding: 8px 12px !important;
+        font-size: 0.80rem !important;
+        padding: 7px 10px !important;
     }
 
     [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]),
     div[data-baseweb="notification"]:has([aria-label="Success"]) {
-        background: rgba(16, 185, 129, 0.12) !important;
-        border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        background: rgba(16, 185, 129, 0.10) !important;
+        border: 1px solid rgba(16, 185, 129, 0.30) !important;
         color: #10B981 !important;
     }
 
     [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]),
     div[data-baseweb="notification"]:has([aria-label="Warning"]) {
-        background: rgba(249, 115, 22, 0.12) !important;
-        border: 1px solid rgba(249, 115, 22, 0.35) !important;
+        background: rgba(249, 115, 22, 0.10) !important;
+        border: 1px solid rgba(249, 115, 22, 0.30) !important;
         color: #F97316 !important;
     }
 
     [data-testid="stAlert"]:has([data-testid="stNotificationContentError"]),
     div[data-baseweb="notification"]:has([aria-label="Error"]) {
-        background: rgba(239, 68, 68, 0.12) !important;
-        border: 1px solid rgba(239, 68, 68, 0.35) !important;
+        background: rgba(239, 68, 68, 0.10) !important;
+        border: 1px solid rgba(239, 68, 68, 0.30) !important;
         color: #EF4444 !important;
     }
 
     [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]),
     div[data-baseweb="notification"]:has([aria-label="Info"]) {
-        background: rgba(56, 189, 248, 0.10) !important;
-        border: 1px solid rgba(56, 189, 248, 0.30) !important;
+        background: rgba(56, 189, 248, 0.08) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
         color: #38BDF8 !important;
     }
 
-    /* Code Blocks */
+    /* Monospace Code Blocks */
     code, pre, [data-testid="stCodeBlock"] {
-        background: #152336 !important;
+        background: #142032 !important;
         color: #38BDF8 !important;
-        border: 1px solid #1E3148 !important;
+        border: 1px solid #1E2E44 !important;
         border-radius: 4px !important;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-        font-size: 0.82rem !important;
+        font-size: 0.80rem !important;
     }
 
     /* Semantic Badges */
     .sx-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.68rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-size: 0.66rem;
         font-weight: 700;
         letter-spacing: 0.5px;
         text-transform: uppercase;
@@ -602,10 +677,173 @@ st.markdown(
     .sx-badge-low { background: rgba(56, 189, 248, 0.14); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.35); }
     .sx-badge-success { background: rgba(16, 185, 129, 0.14); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.35); }
 
+    /* Health Cards Grid */
+    .sx-health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 10px;
+        margin-top: 6px;
+    }
+
+    .sx-health-card {
+        background: #0E1726;
+        border: 1px solid #1E2E44;
+        border-radius: 5px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .sx-health-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10B981;
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+        flex-shrink: 0;
+    }
+
+    .sx-health-name {
+        font-size: 0.70rem;
+        font-weight: 700;
+        color: #F1F5F9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .sx-health-status {
+        font-size: 0.64rem;
+        color: #10B981;
+        font-weight: 600;
+        font-family: ui-monospace, monospace;
+    }
+
+    /* Empty States */
+    .sx-empty-card {
+        background: #0E1726;
+        border: 1px dashed #1E2E44;
+        border-radius: 6px;
+        padding: 32px 20px;
+        text-align: center;
+        margin: 12px 0;
+    }
+
+    .sx-empty-icon {
+        font-size: 1.8rem;
+        margin-bottom: 6px;
+        opacity: 0.8;
+    }
+
+    .sx-empty-title {
+        font-size: 0.90rem;
+        font-weight: 700;
+        color: #F1F5F9;
+        margin-bottom: 4px;
+    }
+
+    .sx-empty-desc {
+        font-size: 0.76rem;
+        color: #94A3B8;
+        max-width: 460px;
+        margin: 0 auto;
+    }
+
+    /* Stepper */
+    .sx-stepper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 6px 0 12px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .sx-step {
+        flex: 1;
+        min-width: 85px;
+        padding: 6px 8px;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 0.70rem;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        background: #142032;
+        border: 1px solid #1E2E44;
+        color: #64748B;
+        transition: all 0.15s ease;
+    }
+
+    .sx-step-completed {
+        background: rgba(16, 185, 129, 0.10);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #10B981;
+    }
+
+    .sx-step-current {
+        background: rgba(56, 189, 248, 0.16);
+        border: 1px solid #38BDF8;
+        color: #38BDF8;
+        font-weight: 800;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+    }
+
+    .sx-stepper-sep {
+        color: #2D486B;
+        font-weight: bold;
+        font-size: 0.75rem;
+        user-select: none;
+    }
+
+    /* AI Copilot Investigation Report */
+    .sx-ai-report {
+        background: #0E1726;
+        border: 1px solid #1E2E44;
+        border-top: 3px solid #6366F1;
+        border-radius: 6px;
+        padding: 16px 18px;
+        margin-top: 10px;
+    }
+
+    .sx-ai-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #1E2E44;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .sx-ai-section-title {
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: #38BDF8;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-top: 10px;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .sx-ai-text {
+        color: #F1F5F9;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        background: #142032;
+        border: 1px solid #1E2E44;
+        border-radius: 5px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+    }
+
     /* Clean Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0A111C; }
-    ::-webkit-scrollbar-thumb { background: #1E3148; border-radius: 4px; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #090D16; }
+    ::-webkit-scrollbar-thumb { background: #1E2E44; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #38BDF8; }
     </style>
     """,
@@ -827,6 +1065,8 @@ for alert in all_alerts:
 # SAFE CONTAINMENT
 # ==================================================
 
+current_incidents = get_incidents(100)
+
 for alert in risk_alerts:
 
     alert_type = normalize_alert_type(
@@ -854,10 +1094,6 @@ for alert in risk_alerts:
 
     existing_incident = None
 
-    current_incidents = get_incidents(
-        100
-    )
-
     for incident in current_incidents:
 
         incident_alert_type = (
@@ -869,6 +1105,7 @@ for alert in risk_alerts:
         if (
             incident_alert_type == alert_type
             and incident["source_ip"] == source_ip
+            and incident.get("status") != "RESOLVED"
         ):
 
             existing_incident = incident
@@ -897,6 +1134,20 @@ for alert in risk_alerts:
             continue
 
         is_new_incident = True
+
+        current_incidents.insert(0, {
+            "incident_id": incident_id,
+            "alert_type": alert_type,
+            "title": alert.get("title", "Security Incident"),
+            "source_ip": source_ip,
+            "severity": alert.get("severity", "LOW"),
+            "risk_score": alert.get("risk_score", 0),
+            "mitre_technique": alert.get("mitre_technique", "N/A"),
+            "description": alert.get("description", alert.get("message", "")),
+            "status": "NEW",
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat()
+        })
 
 
     # ----------------------------------------------
@@ -1163,27 +1414,17 @@ containment_actions = (
 if selected_page == "Dashboard":
 
     st.markdown(
-        """
-        <div class="sx-panel" style="margin-bottom: 1.25rem; border-left: 4px solid #38BDF8; background: #101B2B;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-                <div>
-                    <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
-                        <span style="font-size:1.85rem; font-weight:900; letter-spacing:2px; color:#F8FAFC; line-height:1.1;">
-                            SENTINEL<span style="color:#38BDF8;">X</span>
-                        </span>
-                        <span style="font-size:0.80rem; font-weight:700; letter-spacing:1.4px; color:#94A3B8; text-transform:uppercase;">
-                            Autonomous Security Operations Center
-                        </span>
-                    </div>
-                    <div style="color:#94A3B8; font-size:0.88rem; margin-top:6px; letter-spacing:0.2px;">
-                        Real-time detection, investigation and policy-controlled response.
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>SOC ENGINE ONLINE</span>
-                    <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>DETECTION ACTIVE</span>
-                    <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>CONTAINMENT READY</span>
-                </div>
+        f"""
+        <div class="sx-briefing-bar">
+            <div class="sx-briefing-left">
+                <span class="sx-pulse-dot"></span>
+                <span class="sx-briefing-title">LIVE SOC SITUATIONAL BRIEFING</span>
+                <span class="sx-briefing-divider">•</span>
+                <span class="sx-briefing-text">All 5 detection engines synchronized. Policy-based autonomous host containment active.</span>
+            </div>
+            <div class="sx-briefing-right">
+                <span class="sx-badge sx-badge-success">POSTURE: {posture_label}</span>
+                <span class="sx-badge sx-badge-critical" style="background:rgba(239,68,68,0.12); color:#EF4444; border:1px solid rgba(239,68,68,0.3);">ACTIVE THREATS: {active_incidents}</span>
             </div>
         </div>
         """,
@@ -1203,14 +1444,14 @@ if selected_page == "Dashboard":
                 <div class="sx-kpi-header">
                     <span class="sx-kpi-label">Security Events</span>
                     <div class="sx-kpi-icon" style="background:rgba(56, 189, 248, 0.12); color:#38BDF8;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                         </svg>
                     </div>
                 </div>
                 <div class="sx-kpi-value" style="color:#F1F5F9;">{total_events}</div>
                 <div class="sx-kpi-meta">
-                    <span class="sx-chip-dot sx-dot-cyan"></span> Telemetry stream online
+                    <span class="sx-chip-dot sx-dot-cyan"></span> Host telemetry buffer
                 </div>
             </div>
             """,
@@ -1226,7 +1467,7 @@ if selected_page == "Dashboard":
                 <div class="sx-kpi-header">
                     <span class="sx-kpi-label">High & Critical Alerts</span>
                     <div class="sx-kpi-icon" style="background:{alert_bg}; color:{alert_accent};">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                             <line x1="12" y1="9" x2="12" y2="13"/>
                             <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -1251,7 +1492,7 @@ if selected_page == "Dashboard":
                 <div class="sx-kpi-header">
                     <span class="sx-kpi-label">Active Incidents</span>
                     <div class="sx-kpi-icon" style="background:{threat_bg}; color:{threat_accent};">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="22" y1="12" x2="18" y2="12"/>
                             <line x1="6" y1="12" x2="2" y2="12"/>
@@ -1276,7 +1517,7 @@ if selected_page == "Dashboard":
                 <div class="sx-kpi-header">
                     <span class="sx-kpi-label">Contained Threats</span>
                     <div class="sx-kpi-icon" style="background:rgba(16, 185, 129, 0.12); color:#10B981;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                             <path d="m9 12 2 2 4-4"/>
                         </svg>
@@ -1297,12 +1538,12 @@ if selected_page == "Dashboard":
 
     st.markdown(
         """
-        <div class="sx-panel" style="margin-top: 1.1rem; margin-bottom: 1.1rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="font-size:0.84rem; font-weight:700; color:#F1F5F9; letter-spacing:0.5px;">
+        <div class="sx-panel" style="margin-top: 10px; margin-bottom: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-size:0.78rem; font-weight:800; color:#F1F5F9; letter-spacing:0.5px;">
                     ⚡ AUTONOMOUS SOC DETECTION & RESPONSE PIPELINE
                 </div>
-                <div style="font-size:0.70rem; color:#64748B; font-weight:600;">
+                <div style="font-size:0.66rem; color:#64748B; font-weight:600;">
                     END-TO-END THREAT CORRELATION LIFECYCLE
                 </div>
             </div>
@@ -1328,7 +1569,7 @@ if selected_page == "Dashboard":
                 <div class="sx-pipe-box">
                     <div class="sx-pipe-step">04</div>
                     <div class="sx-pipe-title">Security Alert</div>
-                    <div class="sx-pipe-sub">Triage Prioritized</div>
+                    <div class="sx-pipe-sub">Prioritized</div>
                 </div>
                 <div class="sx-pipe-arrow">➔</div>
                 <div class="sx-pipe-box">
@@ -1367,21 +1608,78 @@ if selected_page == "Dashboard":
     )
 
     # ----------------------------------------------
+    # INTERACTIVE ATTACK DEMO RUNNER (PRESENTER MODE)
+    # ----------------------------------------------
+    with st.expander("⚡ Interactive Threat Simulation & Attack Scenarios (Presenter Mode)", expanded=False):
+        st.markdown(
+            """
+            <div style="font-size:0.80rem; color:#94A3B8; margin-bottom:8px;">
+                Inject realistic multi-stage cyberattack telemetry directly into the SentinelX pipeline to demonstrate real-time heuristic detection, explainable risk scoring, and automated host isolation.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        sim_cols = st.columns(3)
+        with sim_cols[0]:
+            if st.button("💥 Brute Force (T1110)", key="demo_sim_bf", use_container_width=True):
+                with st.spinner("Injecting 5 failed authentication attempts..."):
+                    e_ids = simulate_brute_force()
+                    st.success(f"Injected {len(e_ids)} Brute Force events (IP: 192.168.1.101).")
+                    st.rerun()
+
+            if st.button("⬆️ Privilege Escalation (T1068)", key="demo_sim_priv", use_container_width=True):
+                with st.spinner("Injecting 3 unauthorized privilege elevation events..."):
+                    e_ids = generate_privilege_escalation_events()
+                    st.success(f"Injected {len(e_ids)} Privilege Escalation events (IP: 192.168.1.80).")
+                    st.rerun()
+
+        with sim_cols[1]:
+            if st.button("🔍 Port Scan (T1046)", key="demo_sim_ps", use_container_width=True):
+                with st.spinner("Injecting 10 network service probe events..."):
+                    e_ids = simulate_port_scan()
+                    st.success(f"Injected {len(e_ids)} Port Scan events (IP: 192.168.1.61).")
+                    st.rerun()
+
+            if st.button("💻 Obfuscated PowerShell (T1059)", key="demo_sim_pshell", use_container_width=True):
+                with st.spinner("Injecting obfuscated PowerShell execution events..."):
+                    e_ids = generate_suspicious_powershell_events()
+                    st.success(f"Injected {len(e_ids)} PowerShell execution events (IP: 192.168.1.90).")
+                    st.rerun()
+
+        with sim_cols[2]:
+            if st.button("🔑 Suspicious Auth (T1078)", key="demo_sim_auth", use_container_width=True):
+                with st.spinner("Injecting 5 rapid successful logins..."):
+                    e_ids = simulate_suspicious_authentication()
+                    st.success(f"Injected {len(e_ids)} Suspicious Auth events (IP: 192.168.1.70).")
+                    st.rerun()
+
+            if st.button("🚀 Full Multi-Stage Campaign", key="demo_sim_all", type="primary", use_container_width=True):
+                with st.spinner("Injecting complete multi-stage cyberattack campaign..."):
+                    simulate_brute_force()
+                    simulate_port_scan()
+                    simulate_suspicious_authentication()
+                    generate_privilege_escalation_events()
+                    generate_suspicious_powershell_events()
+                    st.success("Complete 5-stage attack campaign injected into SentinelX.")
+                    st.rerun()
+
+    # ----------------------------------------------
     # SECURITY POSTURE
     # ----------------------------------------------
 
-    st.subheader("🛡️ Enterprise Security Posture")
+    st.markdown("### 🛡️ Enterprise Security Posture")
 
     if posture_label in ["EXCELLENT", "GOOD"]:
         posture_badge_color = "#10B981"
         posture_bg = "rgba(16, 185, 129, 0.12)"
         posture_border = "rgba(16, 185, 129, 0.35)"
-        posture_desc = "Systems stable under current threat load. Defenses active."
+        posture_desc = "Systems stable under current threat load. Detection and containment defenses active."
     elif posture_label in ["MODERATE", "POOR"]:
         posture_badge_color = "#F97316"
         posture_bg = "rgba(249, 115, 22, 0.12)"
         posture_border = "rgba(249, 115, 22, 0.35)"
-        posture_desc = "Elevated threat volume. Active investigation and containment recommended."
+        posture_desc = "Elevated threat volume. Active analyst investigation and containment recommended."
     else:
         posture_badge_color = "#EF4444"
         posture_bg = "rgba(239, 68, 68, 0.12)"
@@ -1389,40 +1687,40 @@ if selected_page == "Dashboard":
         posture_desc = "Critical threat threshold breached. Immediate host isolation required."
 
     posture_html = f"""
-    <div class="sx-panel" style="margin-bottom: 0.8rem; border: 1px solid {posture_border}; background: #101B2B;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-            <div style="display:flex; align-items:center; gap:18px;">
-                <div style="text-align:center; padding:10px 18px; background:#152336; border:1px solid #1E3148; border-radius:6px;">
-                    <div style="color:#94A3B8; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;">POSTURE SCORE</div>
-                    <div style="font-size:2rem; font-weight:900; color:#F1F5F9; font-family:ui-monospace, monospace; line-height:1.1; margin-top:2px;">
-                        {posture_score}<span style="font-size:0.9rem; color:#64748B;">/100</span>
+    <div class="sx-panel" style="margin-bottom: 0.6rem; border: 1px solid {posture_border}; background: #0E1726;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div style="text-align:center; padding:8px 16px; background:#142032; border:1px solid #1E2E44; border-radius:5px;">
+                    <div style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px;">POSTURE SCORE</div>
+                    <div style="font-size:1.85rem; font-weight:900; color:#F1F5F9; font-family:ui-monospace, monospace; line-height:1.1; margin-top:2px;">
+                        {posture_score}<span style="font-size:0.85rem; color:#64748B;">/100</span>
                     </div>
                 </div>
                 <div>
-                    <div style="display:inline-block; padding:3px 10px; border-radius:4px; font-size:0.75rem; font-weight:800; letter-spacing:0.8px; background:{posture_bg}; color:{posture_badge_color}; border:1px solid {posture_border};">
+                    <div style="display:inline-block; padding:2px 8px; border-radius:3px; font-size:0.70rem; font-weight:800; letter-spacing:0.7px; background:{posture_bg}; color:{posture_badge_color}; border:1px solid {posture_border};">
                         STATUS: {posture_label}
                     </div>
-                    <div style="color:#94A3B8; font-size:0.84rem; margin-top:6px;">
+                    <div style="color:#94A3B8; font-size:0.80rem; margin-top:4px;">
                         {posture_desc}
                     </div>
                 </div>
             </div>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
-                    <div style="color:#64748B; font-size:0.62rem; font-weight:700;">ACTIVE</div>
-                    <div style="color:#F1F5F9; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['active_incidents']}</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; text-align:center;">
+                    <div style="color:#64748B; font-size:0.60rem; font-weight:700;">ACTIVE</div>
+                    <div style="color:#F1F5F9; font-size:1.0rem; font-weight:800; font-family:monospace;">{posture['details']['active_incidents']}</div>
                 </div>
-                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
-                    <div style="color:#F97316; font-size:0.62rem; font-weight:700;">HIGH/CRIT</div>
-                    <div style="color:#F97316; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['high_critical_incidents']}</div>
+                <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; text-align:center;">
+                    <div style="color:#F97316; font-size:0.60rem; font-weight:700;">HIGH/CRIT</div>
+                    <div style="color:#F97316; font-size:1.0rem; font-weight:800; font-family:monospace;">{posture['details']['high_critical_incidents']}</div>
                 </div>
-                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
-                    <div style="color:#10B981; font-size:0.62rem; font-weight:700;">CONTAINED</div>
-                    <div style="color:#10B981; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['contained_incidents']}</div>
+                <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; text-align:center;">
+                    <div style="color:#10B981; font-size:0.60rem; font-weight:700;">CONTAINED</div>
+                    <div style="color:#10B981; font-size:1.0rem; font-weight:800; font-family:monospace;">{posture['details']['contained_incidents']}</div>
                 </div>
-                <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; text-align:center;">
-                    <div style="color:#38BDF8; font-size:0.62rem; font-weight:700;">RESOLVED</div>
-                    <div style="color:#38BDF8; font-size:1.1rem; font-weight:800; font-family:monospace;">{posture['details']['resolved_incidents']}</div>
+                <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; text-align:center;">
+                    <div style="color:#38BDF8; font-size:0.60rem; font-weight:700;">RESOLVED</div>
+                    <div style="color:#38BDF8; font-size:1.0rem; font-weight:800; font-family:monospace;">{posture['details']['resolved_incidents']}</div>
                 </div>
             </div>
         </div>
@@ -1439,7 +1737,7 @@ if selected_page == "Dashboard":
 
     st.divider()
 
-    st.subheader("📊 Threat Landscape Overview")
+    st.markdown("### 📊 Threat Landscape Overview")
 
     summary_col1, summary_col2, summary_col3 = st.columns(3)
 
@@ -1477,24 +1775,50 @@ if selected_page == "Dashboard":
 
     st.divider()
 
-    st.subheader("⚡ SentinelX Core Pipeline Health")
+    st.markdown("### ⚡ SentinelX Core Pipeline Health")
 
-    status_col1, status_col2, status_col3, status_col4, status_col5 = st.columns(5)
-
-    with status_col1:
-        st.success("Detection Engine\n\n**ONLINE (5 Detectors)**")
-
-    with status_col2:
-        st.success("Risk Engine\n\n**ONLINE (Enrichment)**")
-
-    with status_col3:
-        st.success("Database Engine\n\n**CONNECTED (SQLite)**")
-
-    with status_col4:
-        st.success("AI SOC Copilot\n\n**ACTIVE (Gemini / Rules)**")
-
-    with status_col5:
-        st.success("Safe Containment\n\n**ACTIVE (Host Isolation)**")
+    st.markdown(
+        """
+        <div class="sx-health-grid">
+            <div class="sx-health-card">
+                <span class="sx-health-dot"></span>
+                <div>
+                    <div class="sx-health-name">Detection Engine</div>
+                    <div class="sx-health-status">ONLINE (5 Detectors)</div>
+                </div>
+            </div>
+            <div class="sx-health-card">
+                <span class="sx-health-dot"></span>
+                <div>
+                    <div class="sx-health-name">Risk Engine</div>
+                    <div class="sx-health-status">ONLINE (Enrichment)</div>
+                </div>
+            </div>
+            <div class="sx-health-card">
+                <span class="sx-health-dot"></span>
+                <div>
+                    <div class="sx-health-name">Database Vault</div>
+                    <div class="sx-health-status">CONNECTED (SQLite)</div>
+                </div>
+            </div>
+            <div class="sx-health-card">
+                <span class="sx-health-dot"></span>
+                <div>
+                    <div class="sx-health-name">AI SOC Copilot</div>
+                    <div class="sx-health-status">ACTIVE (Gemini / Rules)</div>
+                </div>
+            </div>
+            <div class="sx-health-card">
+                <span class="sx-health-dot"></span>
+                <div>
+                    <div class="sx-health-name">Safe Containment</div>
+                    <div class="sx-health-status">ACTIVE (Host Isolation)</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 
@@ -1504,10 +1828,21 @@ if selected_page == "Dashboard":
 
 elif selected_page == "Live Events":
 
-    st.title("📡 Live Security Telemetry")
-    st.caption("Real-time security telemetry and host audit events ingested by SentinelX.")
-
-    st.divider()
+    st.markdown(
+        """
+        <div class="sx-page-title-row">
+            <div class="sx-page-title">📡 Live Security Telemetry Feed</div>
+            <div class="sx-chips-row">
+                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>STREAM ACTIVE</span>
+                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>INGESTION ONLINE</span>
+            </div>
+        </div>
+        <div class="sx-page-desc">
+            Real-time security telemetry and host audit events ingested into the SentinelX processing pipeline.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     if events:
         # ----------------------------------------------
@@ -1605,10 +1940,32 @@ elif selected_page == "Live Events":
             )
             st.caption(f"Displaying {len(filtered_events)} of {len(events)} security events in buffer.")
         else:
-            st.info("No security events match the current filter criteria.")
+            st.markdown(
+                """
+                <div class="sx-empty-card">
+                    <div class="sx-empty-icon">🔍</div>
+                    <div class="sx-empty-title">No Matching Telemetry Events</div>
+                    <div class="sx-empty-desc">
+                        No security events match your current filter criteria. Try broadening your search query or selecting 'ALL' in the event type and severity filters.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     else:
-        st.info("No security events received yet.")
+        st.markdown(
+            """
+            <div class="sx-empty-card">
+                <div class="sx-empty-icon">📡</div>
+                <div class="sx-empty-title">No Security Telemetry Ingested</div>
+                <div class="sx-empty-desc">
+                    SentinelX has not received telemetry events yet. Launch an attack simulation or ingest host logs to populate the pipeline.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 
@@ -1618,10 +1975,21 @@ elif selected_page == "Live Events":
 
 elif selected_page == "Security Alerts":
 
-    st.title("🚨 Security Alerts & Detections")
-    st.caption("Prioritized detections generated by SentinelX detection engines and enriched by the Risk Scoring pipeline.")
-
-    st.divider()
+    st.markdown(
+        """
+        <div class="sx-page-title-row">
+            <div class="sx-page-title">🚨 Security Alerts & Risk Detections</div>
+            <div class="sx-chips-row">
+                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>MULTI-FACTOR SCORING</span>
+                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>CORRELATION HUB</span>
+            </div>
+        </div>
+        <div class="sx-page-desc">
+            Prioritized detections generated by SentinelX heuristic engines and enriched by dynamic multi-factor risk scoring.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # ----------------------------------------------
     # ALERT SUMMARY
@@ -1719,16 +2087,6 @@ elif selected_page == "Security Alerts":
             mitre = alert.get("mitre_technique", "N/A")
             description = alert.get("description", alert.get("message", "No detection summary available."))
 
-            # Severity icon
-            if risk_level == "CRITICAL":
-                severity_icon = "🔴"
-            elif risk_level == "HIGH":
-                severity_icon = "🟠"
-            elif risk_level == "MEDIUM":
-                severity_icon = "🟡"
-            else:
-                severity_icon = "🟢"
-
             # ------------------------------------------
             # INCIDENT LOOKUP
             # ------------------------------------------
@@ -1749,7 +2107,7 @@ elif selected_page == "Security Alerts":
                 header_col1, header_col2 = st.columns([4, 1])
 
                 with header_col1:
-                    st.markdown(f"### {severity_icon} {title}")
+                    st.markdown(f"### {title}")
                     st.caption(f"Detection Engine Type: `{alert_type}`")
 
                 with header_col2:
@@ -1763,10 +2121,10 @@ elif selected_page == "Security Alerts":
                 with info_col1:
                     st.write("**Severity Level**")
                     sev_badge = {
-                        "CRITICAL": '<span class="sx-badge sx-badge-critical" style="font-size:0.80rem; padding:4px 12px;">CRITICAL</span>',
-                        "HIGH": '<span class="sx-badge sx-badge-high" style="font-size:0.80rem; padding:4px 12px;">HIGH</span>',
-                        "MEDIUM": '<span class="sx-badge sx-badge-medium" style="font-size:0.80rem; padding:4px 12px;">MEDIUM</span>',
-                        "LOW": '<span class="sx-badge sx-badge-low" style="font-size:0.80rem; padding:4px 12px;">LOW</span>',
+                        "CRITICAL": '<span class="sx-badge sx-badge-critical">CRITICAL</span>',
+                        "HIGH": '<span class="sx-badge sx-badge-high">HIGH</span>',
+                        "MEDIUM": '<span class="sx-badge sx-badge-medium">MEDIUM</span>',
+                        "LOW": '<span class="sx-badge sx-badge-low">LOW</span>',
                     }.get(risk_level, f'<span class="sx-badge sx-badge-low">{risk_level}</span>')
                     st.markdown(sev_badge, unsafe_allow_html=True)
 
@@ -1802,11 +2160,11 @@ elif selected_page == "Security Alerts":
                     with inc_col2:
                         st.write("**Incident Workflow Status**")
                         status_badge = {
-                            "CONTAINED": '<span class="sx-badge sx-badge-success" style="font-size:0.75rem; padding:3px 10px;">● CONTAINED</span>',
-                            "RESOLVED": '<span class="sx-badge sx-badge-success" style="font-size:0.75rem; padding:3px 10px;">● RESOLVED</span>',
-                            "INVESTIGATING": '<span class="sx-badge sx-badge-high" style="font-size:0.75rem; padding:3px 10px;">● INVESTIGATING</span>',
-                            "TRIAGED": '<span class="sx-badge sx-badge-medium" style="font-size:0.75rem; padding:3px 10px;">● TRIAGED</span>',
-                            "NEW": '<span class="sx-badge sx-badge-low" style="font-size:0.75rem; padding:3px 10px;">● NEW</span>',
+                            "CONTAINED": '<span class="sx-badge sx-badge-success">● CONTAINED</span>',
+                            "RESOLVED": '<span class="sx-badge sx-badge-success">● RESOLVED</span>',
+                            "INVESTIGATING": '<span class="sx-badge sx-badge-high">● INVESTIGATING</span>',
+                            "TRIAGED": '<span class="sx-badge sx-badge-medium">● TRIAGED</span>',
+                            "NEW": '<span class="sx-badge sx-badge-low">● NEW</span>',
                         }.get(incident_status, f'<span class="sx-badge sx-badge-low">● {incident_status}</span>')
                         st.markdown(status_badge, unsafe_allow_html=True)
 
@@ -1828,9 +2186,31 @@ elif selected_page == "Security Alerts":
                     st.info("Incident correlation is pending.")
 
     elif risk_alerts:
-        st.info("No security alerts match your filter criteria.")
+        st.markdown(
+            """
+            <div class="sx-empty-card">
+                <div class="sx-empty-icon">🔍</div>
+                <div class="sx-empty-title">No Security Alerts Match Filter</div>
+                <div class="sx-empty-desc">
+                    No detections match your current search query or severity filter. Adjust your filter criteria to view all alerts.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     else:
-        st.success("No active security threats detected.")
+        st.markdown(
+            """
+            <div class="sx-empty-card">
+                <div class="sx-empty-icon">🛡️</div>
+                <div class="sx-empty-title">Zero Active Threats Detected</div>
+                <div class="sx-empty-desc">
+                    The detection engine has not triggered any alerts. Ingest live telemetry or run the attack simulator to test detectors.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 
@@ -1840,10 +2220,21 @@ elif selected_page == "Security Alerts":
 
 elif selected_page == "Incidents":
 
-    st.title("🛡️ Incident Management & Response")
-    st.caption("Investigate, track, and orchestrate response actions for correlated security incidents.")
-
-    st.divider()
+    st.markdown(
+        """
+        <div class="sx-page-title-row">
+            <div class="sx-page-title">🛡️ Incident Management & Containment Console</div>
+            <div class="sx-chips-row">
+                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>AUTO-CONTAINMENT READY</span>
+                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>AI ASSISTED</span>
+            </div>
+        </div>
+        <div class="sx-page-desc">
+            Investigate correlated security threats, track investigation lifecycle states, and orchestrate policy-controlled containment.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     if incidents:
         # ----------------------------------------------
@@ -1950,12 +2341,6 @@ elif selected_page == "Incidents":
                     "RESOLVED": "✅"
                 }.get(status, "⚪")
 
-                severity_icon = {
-                    "CRITICAL": "🔴",
-                    "HIGH": "🟠",
-                    "MEDIUM": "🟡"
-                }.get(severity, "🟢")
-
                 # --------------------------------------
                 # INCIDENT CARD
                 # --------------------------------------
@@ -1964,7 +2349,7 @@ elif selected_page == "Incidents":
 
                     with head_col1:
                         st.markdown(f"### {status_icon} {incident_id} — {title}")
-                        st.caption(f"{severity_icon} Severity: `{severity}`  |  Current Workflow State: `{status}`")
+                        st.caption(f"Severity: `{severity}`  |  Workflow State: `{status}`")
 
                     with head_col2:
                         st.metric("Risk Score", f"{risk_score} / 100")
@@ -1979,10 +2364,10 @@ elif selected_page == "Incidents":
                     with info_col2:
                         st.write("**Severity**")
                         sev_badge = {
-                            "CRITICAL": '<span class="sx-badge sx-badge-critical" style="font-size:0.80rem; padding:4px 12px;">CRITICAL</span>',
-                            "HIGH": '<span class="sx-badge sx-badge-high" style="font-size:0.80rem; padding:4px 12px;">HIGH</span>',
-                            "MEDIUM": '<span class="sx-badge sx-badge-medium" style="font-size:0.80rem; padding:4px 12px;">MEDIUM</span>',
-                            "LOW": '<span class="sx-badge sx-badge-low" style="font-size:0.80rem; padding:4px 12px;">LOW</span>',
+                            "CRITICAL": '<span class="sx-badge sx-badge-critical">CRITICAL</span>',
+                            "HIGH": '<span class="sx-badge sx-badge-high">HIGH</span>',
+                            "MEDIUM": '<span class="sx-badge sx-badge-medium">MEDIUM</span>',
+                            "LOW": '<span class="sx-badge sx-badge-low">LOW</span>',
                         }.get(severity, f'<span class="sx-badge sx-badge-low">{severity}</span>')
                         st.markdown(sev_badge, unsafe_allow_html=True)
 
@@ -2009,24 +2394,22 @@ elif selected_page == "Incidents":
                     step_html_items = []
                     for idx, stage in enumerate(lifecycle):
                         if idx < lifecycle_index:
-                            step_style = "background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #10B981;"
+                            step_class = "sx-step sx-step-completed"
                             marker = "✓"
                         elif idx == lifecycle_index:
-                            step_style = "background: rgba(56, 189, 248, 0.18); border: 1px solid #38BDF8; color: #38BDF8; font-weight: 800; box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);"
+                            step_class = "sx-step sx-step-current"
                             marker = "●"
                         else:
-                            step_style = "background: #152336; border: 1px solid #1E3148; color: #64748B;"
+                            step_class = "sx-step"
                             marker = "○"
 
                         step_html_items.append(
-                            f'<div style="flex:1; min-width:85px; padding:6px 10px; border-radius:6px; text-align:center; font-size:0.72rem; font-weight:700; {step_style}">'
-                            f'{marker} {stage}'
-                            f'</div>'
+                            f'<div class="{step_class}">{marker} {stage}</div>'
                         )
 
                     stepper_html = f"""
-                    <div style="display:flex; align-items:center; gap:6px; margin:6px 0 14px; overflow-x:auto;">
-                        {' <span style="color:#2D486B; font-weight:bold; font-size:0.75rem;">→</span> '.join(step_html_items)}
+                    <div class="sx-stepper">
+                        {' <span class="sx-stepper-sep">→</span> '.join(step_html_items)}
                     </div>
                     """
                     st.markdown(stepper_html, unsafe_allow_html=True)
@@ -2047,7 +2430,7 @@ elif selected_page == "Incidents":
                         )
 
                     with ctrl_col2:
-                        st.write("&nbsp;")
+                        st.write("")
                         if selected_status != status:
                             if st.button("Update Status", key=f"update_{incident_id}", use_container_width=True):
                                 updated_rows = update_incident_status(incident_id, selected_status)
@@ -2060,6 +2443,147 @@ elif selected_page == "Incidents":
                             st.caption("Status is current.")
 
                     st.divider()
+
+                    # ----------------------------------
+                    # SAFE & REVERSIBLE CONTAINMENT CONTROL
+                    # ----------------------------------
+                    st.write("**Defensive Containment & Host Isolation**")
+                    is_blocked = is_source_blocked(source_ip)
+
+                    contain_box_col1, contain_box_col2 = st.columns([3, 2])
+                    with contain_box_col1:
+                        if is_blocked:
+                            st.markdown(
+                                '<div style="display:flex; align-items:center; gap:8px; padding:6px 12px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:5px;">'
+                                '<span class="sx-pulse-dot"></span>'
+                                '<span style="color:#10B981; font-weight:800; font-size:0.75rem; letter-spacing:0.5px;">ACTIVE CONTAINMENT: SOURCE IP ISOLATED</span>'
+                                '</div>',
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            st.markdown(
+                                '<div style="display:flex; align-items:center; gap:8px; padding:6px 12px; background:rgba(148,163,184,0.08); border:1px solid rgba(148,163,184,0.25); border-radius:5px;">'
+                                '<span style="width:7px; height:7px; border-radius:50%; background:#64748B; display:inline-block;"></span>'
+                                '<span style="color:#94A3B8; font-weight:700; font-size:0.75rem; letter-spacing:0.5px;">HOST ACTIVE: NOT CURRENTLY ISOLATED</span>'
+                                '</div>',
+                                unsafe_allow_html=True
+                            )
+
+                    with contain_box_col2:
+                        if is_blocked:
+                            if st.button("🔓 Revert Isolation (Unblock IP)", key=f"unblock_btn_{incident_id}", type="secondary", use_container_width=True):
+                                unblock_res = unblock_source_ip(
+                                    incident_id,
+                                    source_ip,
+                                    f"Analyst verified mitigation for {incident_id}"
+                                )
+                                if unblock_res.get("success"):
+                                    if status == "CONTAINED":
+                                        update_incident_status(incident_id, "INVESTIGATING")
+                                    st.success(f"Source IP {source_ip} unblocked safely.")
+                                    st.rerun()
+                                else:
+                                    st.error(unblock_res.get("message", "Failed to unblock source IP."))
+                        else:
+                            if st.button("🛡️ Isolate Host (Block IP)", key=f"block_btn_{incident_id}", type="primary", use_container_width=True):
+                                block_res = block_source_ip(
+                                    incident_id,
+                                    source_ip,
+                                    f"Manual analyst quarantine for {incident_id} ({title})"
+                                )
+                                if block_res.get("success"):
+                                    update_incident_status(incident_id, "CONTAINED")
+                                    st.success(f"Source IP {source_ip} quarantined safely.")
+                                    st.rerun()
+                                else:
+                                    st.error(block_res.get("message", "Failed to isolate source IP."))
+
+                    # Closed-loop containment telemetry verification
+                    if is_blocked:
+                        verif_result = verify_source_containment(source_ip, events)
+                        if verif_result.get("is_verified"):
+                            st.markdown(
+                                f"""
+                                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.30); border-radius:5px; margin-top:8px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="color:#10B981; font-weight:800; font-size:0.75rem;">✓ CLOSED-LOOP VERIFICATION CONFIRMED</span>
+                                        <span style="color:#94A3B8; font-size:0.72rem;">• 0 post-quarantine telemetry packets from <code>{source_ip}</code></span>
+                                    </div>
+                                    <span class="sx-badge sx-badge-success">THREAT NEUTRALIZED</span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                        else:
+                            leak_count = verif_result.get("subsequent_events_count", 0)
+                            st.markdown(
+                                f"""
+                                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.30); border-radius:5px; margin-top:8px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="color:#EF4444; font-weight:800; font-size:0.75rem;">⚠️ CONTAINMENT ANOMALY DETECTED</span>
+                                        <span style="color:#94A3B8; font-size:0.72rem;">• {leak_count} event(s) observed after isolation timestamp</span>
+                                    </div>
+                                    <span class="sx-badge sx-badge-critical">INSPECT TELEMETRY</span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+                    st.divider()
+
+                    # ----------------------------------
+                    # OBSERVABLE THREAT INDICATORS (IOCS)
+                    # ----------------------------------
+                    incident_iocs = extract_incident_iocs(incident, incident_events)
+                    with st.expander("🔬 Observable Threat Indicators (IOCs) & Evidence"):
+                        ioc_col1, ioc_col2, ioc_col3 = st.columns(3)
+                        with ioc_col1:
+                            st.write("**Observed Source IP(s)**")
+                            for s_ip in incident_iocs.get("source_ips", []):
+                                st.code(s_ip)
+                        with ioc_col2:
+                            st.write("**Targeted Identities**")
+                            users = incident_iocs.get("usernames", [])
+                            if users:
+                                for u in users:
+                                    st.code(u)
+                            else:
+                                st.caption("No identity fields recorded.")
+                        with ioc_col3:
+                            st.write("**Targeted Ports**")
+                            ports = incident_iocs.get("targeted_ports", [])
+                            if ports:
+                                st.code(", ".join(str(p) for p in ports))
+                            else:
+                                st.caption("No port specifications in evidence.")
+
+                        st.caption(
+                            f"Observation Window: `{incident_iocs.get('earliest_seen')}` ➔ `{incident_iocs.get('latest_seen')}`  |  "
+                            f"Evidence Count: {incident_iocs.get('evidence_event_count')} Events"
+                        )
+
+                    # ----------------------------------
+                    # CHRONOLOGICAL ATTACK CHAIN / THREAT TIMELINE
+                    # ----------------------------------
+                    incident_timeline = build_incident_timeline(incident_events)
+                    with st.expander(f"🕒 Chronological Attack Timeline ({len(incident_timeline)} Sequence Steps)"):
+                        if incident_timeline:
+                            tl_data = [
+                                {
+                                    "Step": f"#{node['step']}",
+                                    "Offset": node["delta_str"],
+                                    "Attack Milestone": node["stage"],
+                                    "Timestamp": node["timestamp"],
+                                    "Identity": node["username"],
+                                    "Action": node["action"],
+                                    "Status": node["status"],
+                                    "Details": node["message"]
+                                }
+                                for node in incident_timeline
+                            ]
+                            st.dataframe(tl_data, width="stretch", hide_index=True)
+                        else:
+                            st.info("No chronological milestones recorded.")
 
                     # ----------------------------------
                     # CORRELATED EVIDENCE
@@ -2121,7 +2645,7 @@ elif selected_page == "Incidents":
                     # ----------------------------------
                     # AI SOC COPILOT
                     # ----------------------------------
-                    st.subheader("🤖 SentinelX AI SOC Copilot")
+                    st.markdown("### 🤖 SentinelX AI SOC Copilot")
                     st.caption("Evidence-grounded intelligence and prescriptive incident response guidance.")
 
                     ai_session_key = f"ai_analysis_{incident_id}"
@@ -2142,44 +2666,159 @@ elif selected_page == "Incidents":
                     cached_ai = st.session_state.get(ai_session_key)
 
                     if cached_ai:
-                        with st.container(border=True):
-                            st.success("✓ AI Investigation Analysis Available (Ground Truth Verified)")
+                        ai_source = cached_ai.get("ai_source", "AI Copilot")
+                        is_gemini = "Gemini" in ai_source
+                        badge_style = "background:rgba(99,102,241,0.15); color:#818CF8; border:1px solid rgba(99,102,241,0.35);" if is_gemini else "background:rgba(251,191,36,0.15); color:#FBBF24; border:1px solid rgba(251,191,36,0.35);"
 
-                            st.write("**Incident Summary**")
-                            st.write(cached_ai.get("incident_summary", "Not available in supplied evidence."))
+                        st.markdown(
+                            f"""
+                            <div class="sx-ai-report">
+                                <div class="sx-ai-banner">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span class="sx-pulse-dot" style="background:#818CF8; box-shadow:0 0 6px #818CF8;"></span>
+                                        <span style="font-weight:800; font-size:0.76rem; color:#F1F5F9; letter-spacing:0.5px;">THREAT INTELLIGENCE REPORT</span>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:6px;">
+                                        <span style="display:inline-block; padding:2px 8px; border-radius:3px; font-size:0.68rem; font-weight:700; {badge_style}">
+                                            ENGINE: {ai_source.upper()}
+                                        </span>
+                                        <span class="sx-badge sx-badge-success">GROUND TRUTH VERIFIED</span>
+                                    </div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
 
-                            st.write("**Severity & Threat Assessment**")
-                            st.write(cached_ai.get("severity_explanation", "Not available in supplied evidence."))
+                        st.markdown("<div class='sx-ai-section-title'>📋 Executive Incident Summary</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='sx-ai-text'>{cached_ai.get('incident_summary', 'Not available in supplied evidence.')}</div>", unsafe_allow_html=True)
 
-                            st.write("**MITRE ATT&CK Context**")
-                            st.write(cached_ai.get("mitre_explanation", "Not available in supplied evidence."))
+                        what_happened = cached_ai.get("what_happened")
+                        if what_happened and what_happened != cached_ai.get("incident_summary"):
+                            st.markdown("<div class='sx-ai-section-title'>🔎 Forensic Timeline: What Happened?</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='sx-ai-text'>{what_happened}</div>", unsafe_allow_html=True)
 
-                            st.write("**Actionable Investigation Steps**")
-                            steps = cached_ai.get("investigation_steps", [])
-                            if isinstance(steps, list):
-                                for s in steps:
-                                    st.markdown(f"- {s}")
+                        why_suspicious = cached_ai.get("why_suspicious")
+                        if why_suspicious and why_suspicious != cached_ai.get("severity_explanation"):
+                            st.markdown("<div class='sx-ai-section-title'>⚠️ Threat Dynamics: Why Is It Suspicious?</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='sx-ai-text'>{why_suspicious}</div>", unsafe_allow_html=True)
+
+                        st.markdown("<div class='sx-ai-section-title'>⚖️ Severity & Threat Assessment</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='sx-ai-text'>{cached_ai.get('severity_explanation', 'Not available in supplied evidence.')}</div>", unsafe_allow_html=True)
+
+                        st.markdown("<div class='sx-ai-section-title'>🎯 MITRE ATT&CK Context</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='sx-ai-text'>{cached_ai.get('mitre_explanation', 'Not available in supplied evidence.')}</div>", unsafe_allow_html=True)
+
+                        st.markdown("<div class='sx-ai-section-title'>🔍 Actionable Investigation Playbook</div>", unsafe_allow_html=True)
+                        steps = cached_ai.get("investigation_steps", [])
+                        if isinstance(steps, list):
+                            for idx, s in enumerate(steps, 1):
+                                st.markdown(f"**Step {idx}:** {s}")
+                        else:
+                            st.write(steps)
+
+                        st.markdown("<div class='sx-ai-section-title'>🛡️ Prescriptive Containment & Response Directives</div>", unsafe_allow_html=True)
+                        recs = cached_ai.get("recommended_response", [])
+                        if isinstance(recs, list):
+                            for idx, r in enumerate(recs, 1):
+                                st.markdown(f"**Directive {idx}:** {r}")
+                        else:
+                            st.write(recs)
+
+                        verif_steps = cached_ai.get("verification_guidance", [])
+                        if verif_steps:
+                            st.markdown("<div class='sx-ai-section-title'>✅ Post-Action Verification & Recovery Guidance</div>", unsafe_allow_html=True)
+                            if isinstance(verif_steps, list):
+                                for idx, v in enumerate(verif_steps, 1):
+                                    st.markdown(f"**Verification {idx}:** {v}")
                             else:
-                                st.write(steps)
+                                st.write(verif_steps)
 
-                            st.write("**Recommended Containment & Response**")
-                            recs = cached_ai.get("recommended_response", [])
-                            if isinstance(recs, list):
-                                for r in recs:
-                                    st.markdown(f"- {r}")
-                            else:
-                                st.write(recs)
+                        st.caption(
+                            f"Analyzed Security Evidence: {cached_ai.get('evidence_count', len(incident_events))} Events  |  "
+                            f"Provider: SentinelX Hybrid Copilot ({ai_source}) with Deterministic Guardrails"
+                        )
 
-                            st.caption(
-                                f"Analyzed Events: {cached_ai.get('evidence_count', len(incident_events))}  |  "
-                                "Engine: SentinelX Hybrid AI (Gemini 2.5 Pro with Rule-Based Guardrails)"
-                            )
+                    st.divider()
+
+                    # ----------------------------------
+                    # FORENSIC DOSSIER & COMPLIANCE EXPORT
+                    # ----------------------------------
+                    st.markdown("### 📥 Incident Forensic Dossier & Compliance Export")
+                    st.caption("Generate verifiable chain-of-custody forensic reports for executive review, SIEM archival, or CSIRT handoff.")
+
+                    current_verif = None
+                    if is_blocked:
+                        current_verif = verify_source_containment(source_ip, events)
+
+                    json_dossier = generate_forensic_dossier_json(
+                        incident=incident,
+                        events=incident_events,
+                        containment_actions=incident_containment_actions,
+                        status_history=incident_status_history,
+                        ai_report=cached_ai,
+                        verification_status=current_verif
+                    )
+
+                    md_dossier = generate_forensic_dossier_markdown(
+                        incident=incident,
+                        events=incident_events,
+                        containment_actions=incident_containment_actions,
+                        status_history=incident_status_history,
+                        ai_report=cached_ai,
+                        verification_status=current_verif
+                    )
+
+                    dossier_col1, dossier_col2 = st.columns(2)
+                    with dossier_col1:
+                        st.download_button(
+                            label="📥 Download Forensic Dossier (JSON)",
+                            data=json_dossier,
+                            file_name=f"{incident_id}_forensic_dossier.json",
+                            mime="application/json",
+                            key=f"dl_json_{incident_id}",
+                            use_container_width=True
+                        )
+                    with dossier_col2:
+                        st.download_button(
+                            label="📄 Download Executive Briefing (MD)",
+                            data=md_dossier,
+                            file_name=f"{incident_id}_executive_briefing.md",
+                            mime="text/markdown",
+                            key=f"dl_md_{incident_id}",
+                            use_container_width=True
+                        )
+
+                    with st.expander("👁️ Preview Executive Briefing"):
+                        st.markdown(md_dossier)
 
         else:
-            st.info("No incidents match your filter criteria.")
+            st.markdown(
+                """
+                <div class="sx-empty-card">
+                    <div class="sx-empty-icon">🔍</div>
+                    <div class="sx-empty-title">No Incidents Match Selected Filters</div>
+                    <div class="sx-empty-desc">
+                        No security incidents match the current workflow status or severity filters. Reset filters to view all active incidents.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     else:
-        st.info("No incidents created yet.")
+        st.markdown(
+            """
+            <div class="sx-empty-card">
+                <div class="sx-empty-icon">🛡️</div>
+                <div class="sx-empty-title">Zero Security Incidents Created</div>
+                <div class="sx-empty-desc">
+                    SentinelX has not created any security incidents yet. When suspicious telemetry triggers detection thresholds, incidents will appear here automatically.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 
@@ -2189,10 +2828,21 @@ elif selected_page == "Incidents":
 
 elif selected_page == "MITRE ATT&CK":
 
-    st.title("🎯 MITRE ATT&CK® Threat Matrix")
-    st.caption("Adversary Tactics, Techniques, and Common Knowledge (ATT&CK) mapping for SentinelX detections.")
-
-    st.divider()
+    st.markdown(
+        """
+        <div class="sx-page-title-row">
+            <div class="sx-page-title">🎯 MITRE ATT&CK® Threat Matrix & Trace</div>
+            <div class="sx-chips-row">
+                <span class="sx-chip sx-chip-indigo"><span class="sx-chip-dot sx-dot-indigo"></span>ENTERPRISE MATRIX</span>
+                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>TACTIC TRACE</span>
+            </div>
+        </div>
+        <div class="sx-page-desc">
+            Adversary Tactics, Techniques, and Common Knowledge (ATT&CK) mapping for SentinelX detection engines with verified evidence linking.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     mitre_mapping = {
         "BRUTE_FORCE": {
@@ -2264,7 +2914,7 @@ elif selected_page == "MITRE ATT&CK":
     # ----------------------------------------------
     # DETECTION MAPPING TABLE
     # ----------------------------------------------
-    st.subheader("📋 Detection Engine → MITRE Matrix Mapping")
+    st.markdown("### 📋 Detection Engine → MITRE Matrix Mapping")
 
     mitre_data = []
     for alert_type, mapping in mitre_mapping.items():
@@ -2295,7 +2945,7 @@ elif selected_page == "MITRE ATT&CK":
     # ----------------------------------------------
     # ACTIVE TECHNIQUES DEEP DIVE
     # ----------------------------------------------
-    st.subheader("🔍 Active Threat Technique Profiles")
+    st.markdown("### 🔍 Active Threat Technique Profiles")
 
     if active_techniques:
         for technique in sorted(active_techniques):
@@ -2322,20 +2972,20 @@ elif selected_page == "MITRE ATT&CK":
 
                     trace_html = f"""
                     <div style="display:flex; align-items:center; gap:6px; margin:8px 0 12px; overflow-x:auto;">
-                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#F1F5F9;">
-                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">DETECTION ENGINE</span><br><b>{det_types}</b>
+                        <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; font-size:0.70rem; color:#F1F5F9;">
+                            <span style="color:#94A3B8; font-size:0.60rem; font-weight:700; text-transform:uppercase;">DETECTION ENGINE</span><br><b>{det_types}</b>
                         </div>
-                        <span style="color:#38BDF8; font-size:0.8rem; font-weight:bold;">→</span>
-                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#38BDF8; font-family:monospace;">
-                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">TECHNIQUE</span><br><b>{mapping['technique']}</b>
+                        <span style="color:#38BDF8; font-size:0.75rem; font-weight:bold;">→</span>
+                        <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; font-size:0.70rem; color:#38BDF8; font-family:monospace;">
+                            <span style="color:#94A3B8; font-size:0.60rem; font-weight:700; text-transform:uppercase;">TECHNIQUE</span><br><b>{mapping['technique']}</b>
                         </div>
-                        <span style="color:#38BDF8; font-size:0.8rem; font-weight:bold;">→</span>
-                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#818CF8;">
-                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">TACTIC</span><br><b>{mapping['tactic']}</b>
+                        <span style="color:#38BDF8; font-size:0.75rem; font-weight:bold;">→</span>
+                        <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; font-size:0.70rem; color:#818CF8;">
+                            <span style="color:#94A3B8; font-size:0.60rem; font-weight:700; text-transform:uppercase;">TACTIC</span><br><b>{mapping['tactic']}</b>
                         </div>
-                        <span style="color:#38BDF8; font-size:0.8rem; font-weight:bold;">→</span>
-                        <div style="background:#152336; border:1px solid #1E3148; border-radius:6px; padding:6px 12px; font-size:0.72rem; color:#10B981;">
-                            <span style="color:#94A3B8; font-size:0.62rem; font-weight:700; text-transform:uppercase;">CONFIRMED EVIDENCE</span><br><b>{evidence_count} Events Linked</b>
+                        <span style="color:#38BDF8; font-size:0.75rem; font-weight:bold;">→</span>
+                        <div style="background:#142032; border:1px solid #1E2E44; border-radius:5px; padding:5px 10px; font-size:0.70rem; color:#10B981;">
+                            <span style="color:#94A3B8; font-size:0.60rem; font-weight:700; text-transform:uppercase;">CONFIRMED EVIDENCE</span><br><b>{evidence_count} Events Linked</b>
                         </div>
                     </div>
                     """
@@ -2345,7 +2995,18 @@ elif selected_page == "MITRE ATT&CK":
                 with st.container(border=True):
                     st.code(technique)
     else:
-        st.info("No active MITRE ATT&CK techniques triggered in current telemetry buffer.")
+        st.markdown(
+            """
+            <div class="sx-empty-card">
+                <div class="sx-empty-icon">🎯</div>
+                <div class="sx-empty-title">No Active ATT&CK Techniques Triggered</div>
+                <div class="sx-empty-desc">
+                    No MITRE ATT&CK adversary techniques have been mapped to the current telemetry buffer. As detections fire, active technique profiles will appear here with complete trace flows.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 
@@ -2355,10 +3016,21 @@ elif selected_page == "MITRE ATT&CK":
 
 elif selected_page == "Audit Logs":
 
-    st.title("📋 Containment & Security Audit Trail")
-    st.caption("Forensic audit trail of all automated containment actions and security response events.")
-
-    st.divider()
+    st.markdown(
+        """
+        <div class="sx-page-title-row">
+            <div class="sx-page-title">📋 Containment & Forensics Audit Trail</div>
+            <div class="sx-chips-row">
+                <span class="sx-chip sx-chip-green"><span class="sx-chip-dot sx-dot-green"></span>IMMUTABLE LEDGER</span>
+                <span class="sx-chip sx-chip-cyan"><span class="sx-chip-dot sx-dot-cyan"></span>COMPLIANCE READY</span>
+            </div>
+        </div>
+        <div class="sx-page-desc">
+            Forensic audit trail of all automated containment commands, policy decisions, and host isolation events.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # Reload latest actions
     containment_actions = get_containment_actions()
@@ -2445,7 +3117,38 @@ elif selected_page == "Audit Logs":
             )
             st.caption(f"Displaying {len(filtered_actions)} of {len(containment_actions)} total forensic records.")
         else:
-            st.info("No audit records match the selected filter.")
+            st.markdown(
+                """
+                <div class="sx-empty-card">
+                    <div class="sx-empty-icon">🔍</div>
+                    <div class="sx-empty-title">No Audit Records Match Filter</div>
+                    <div class="sx-empty-desc">
+                        No containment records match your current search query or status filter. Try clearing the search query or setting the filter to 'ALL'.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # ----------------------------------------------
+        # ACTIVE CONTAINMENT BLOCKLIST
+        # ----------------------------------------------
+        active_blocks = get_blocked_sources()
+        with st.expander(f"🔒 Active Containment Blocklist ({len(active_blocks)} Active Host Isolations)"):
+            if active_blocks:
+                active_block_data = [
+                    {
+                        "Quarantined Host IP": b["source_ip"],
+                        "Incident Link": b["incident_id"],
+                        "Isolation Timestamp": b["blocked_at"],
+                        "Containment Rationale": b["reason"],
+                        "Status": b["status"]
+                    }
+                    for b in active_blocks
+                ]
+                st.dataframe(active_block_data, width="stretch", hide_index=True)
+            else:
+                st.info("No host entities are currently isolated in the active blocklist.")
 
         st.divider()
 
@@ -2461,7 +3164,18 @@ elif selected_page == "Audit Logs":
             )
 
     else:
-        st.info("No containment actions recorded yet.")
+        st.markdown(
+            """
+            <div class="sx-empty-card">
+                <div class="sx-empty-icon">📋</div>
+                <div class="sx-empty-title">Zero Containment Actions Recorded</div>
+                <div class="sx-empty-desc">
+                    SentinelX has not executed any host containment actions yet. When high-risk threats trigger containment policies, immutable execution logs will appear here.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 
@@ -2471,11 +3185,12 @@ elif selected_page == "Audit Logs":
 
 st.divider()
 
-st.caption(
-    "SentinelX — AI-Assisted Autonomous Security Operations Center"
-)
-
-st.caption(
-    "Detection • Risk Analysis • MITRE Mapping • "
-    "AI Investigation • Safe Containment • Audit"
+st.markdown(
+    """
+    <div style="text-align:center; padding:10px 0; color:#64748B; font-size:0.75rem;">
+        <b style="color:#94A3B8;">SENTINELX</b> — Autonomous Security Operations Center Platform & Mini-SIEM<br>
+        <span style="font-size:0.68rem; letter-spacing:0.5px; text-transform:uppercase;">Detection • Risk Scoring • MITRE ATT&CK • Gemini AI Investigation • Safe Containment • Forensic Audit</span>
+    </div>
+    """,
+    unsafe_allow_html=True
 )

@@ -1,12 +1,14 @@
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 
 # --------------------------------------------------
 # DATABASE PATH
 # --------------------------------------------------
 
-DATABASE_PATH = "database/sentinelx.db"
+BASE_DIR = Path(__file__).resolve().parent
+DATABASE_PATH = str(BASE_DIR / "sentinelx.db")
 
 
 # --------------------------------------------------
@@ -44,154 +46,154 @@ def get_connection():
 def initialize_database():
 
     connection = get_connection()
+    try:
+        cursor = connection.cursor()
 
-    cursor = connection.cursor()
+        # --------------------------------------------------
+        # SECURITY EVENTS TABLE
+        # --------------------------------------------------
 
-    # --------------------------------------------------
-    # SECURITY EVENTS TABLE
-    # --------------------------------------------------
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS security_events (
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS security_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
 
-            timestamp TEXT NOT NULL,
+                source_ip TEXT,
 
-            source_ip TEXT,
+                username TEXT,
 
-            username TEXT,
+                event_type TEXT,
 
-            event_type TEXT,
+                action TEXT,
 
-            action TEXT,
+                status TEXT,
 
-            status TEXT,
+                message TEXT,
 
-            message TEXT,
+                severity TEXT,
 
-            severity TEXT,
+                port INTEGER
 
-            port INTEGER
-
+            )
+            """
         )
-        """
-    )
 
-    # --------------------------------------------------
-    # INCIDENTS TABLE
-    # --------------------------------------------------
+        # --------------------------------------------------
+        # INCIDENTS TABLE
+        # --------------------------------------------------
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS incidents (
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS incidents (
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            incident_id TEXT UNIQUE,
+                incident_id TEXT UNIQUE,
 
-            alert_type TEXT,
+                alert_type TEXT,
 
-            title TEXT,
+                title TEXT,
 
-            source_ip TEXT,
+                source_ip TEXT,
 
-            severity TEXT,
+                severity TEXT,
 
-            risk_score INTEGER,
+                risk_score INTEGER,
 
-            mitre_technique TEXT,
+                mitre_technique TEXT,
 
-            description TEXT,
+                description TEXT,
 
-            status TEXT DEFAULT 'NEW',
+                status TEXT DEFAULT 'NEW',
 
-            created_at TEXT,
+                created_at TEXT,
 
-            updated_at TEXT
+                updated_at TEXT
 
+            )
+            """
         )
-        """
-    )
 
-    # --------------------------------------------------
-    # INCIDENT EVENTS TABLE
-    # --------------------------------------------------
+        # --------------------------------------------------
+        # INCIDENT EVENTS TABLE
+        # --------------------------------------------------
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS incident_events (
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS incident_events (
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            incident_id TEXT,
+                incident_id TEXT,
 
-            event_id INTEGER,
+                event_id INTEGER,
 
-            linked_at TEXT
+                linked_at TEXT
 
+            )
+            """
         )
-        """
-    )
 
-    # --------------------------------------------------
-    # INCIDENT STATUS HISTORY TABLE
-    # --------------------------------------------------
+        # --------------------------------------------------
+        # INCIDENT STATUS HISTORY TABLE
+        # --------------------------------------------------
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS incident_status_history (
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS incident_status_history (
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            incident_id TEXT NOT NULL,
+                incident_id TEXT NOT NULL,
 
-            old_status TEXT,
+                old_status TEXT,
 
-            new_status TEXT NOT NULL,
+                new_status TEXT NOT NULL,
 
-            changed_at TEXT NOT NULL
+                changed_at TEXT NOT NULL
 
+            )
+            """
         )
-        """
-    )
 
-    # --------------------------------------------------
-    # PERFORMANCE INDEXES
-    # --------------------------------------------------
+        # --------------------------------------------------
+        # PERFORMANCE INDEXES
+        # --------------------------------------------------
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_security_events_source_ip ON security_events (source_ip)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_security_events_source_ip ON security_events (source_ip)"
+        )
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_security_events_timestamp ON security_events (timestamp DESC)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_security_events_timestamp ON security_events (timestamp DESC)"
+        )
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_security_events_event_type ON security_events (event_type)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_security_events_event_type ON security_events (event_type)"
+        )
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_incidents_source_ip ON incidents (source_ip)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_incidents_source_ip ON incidents (source_ip)"
+        )
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents (status)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents (status)"
+        )
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_incident_events_lookup ON incident_events (incident_id, event_id)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_incident_events_lookup ON incident_events (incident_id, event_id)"
+        )
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_status_history_incident_id ON incident_status_history (incident_id)"
-    )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_status_history_incident_id ON incident_status_history (incident_id)"
+        )
 
-    connection.commit()
-
-    connection.close()
+        connection.commit()
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -200,82 +202,87 @@ def initialize_database():
 
 def insert_event(event):
 
+    if not isinstance(event, dict):
+        event = {}
+
+    raw_ts = event.get("timestamp")
+    timestamp = str(raw_ts).strip() if raw_ts is not None else ""
+    if not timestamp:
+        timestamp = datetime.now().isoformat()
+
     connection = get_connection()
+    try:
+        cursor = connection.cursor()
 
-    cursor = connection.cursor()
+        cursor.execute(
+            """
+            INSERT INTO security_events (
 
-    cursor.execute(
-        """
-        INSERT INTO security_events (
+                timestamp,
+                source_ip,
+                username,
+                event_type,
+                action,
+                status,
+                message,
+                severity,
+                port
 
-            timestamp,
-            source_ip,
-            username,
-            event_type,
-            action,
-            status,
-            message,
-            severity,
-            port
+            )
 
-        )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                timestamp,
 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event.get(
-                "timestamp",
-                datetime.now().isoformat()
-            ),
+                event.get(
+                    "source_ip",
+                    ""
+                ) or "",
 
-            event.get(
-                "source_ip",
-                ""
-            ),
+                event.get(
+                    "username",
+                    ""
+                ) or "",
 
-            event.get(
-                "username",
-                ""
-            ),
+                event.get(
+                    "event_type",
+                    ""
+                ) or "",
 
-            event.get(
-                "event_type",
-                ""
-            ),
+                event.get(
+                    "action",
+                    ""
+                ) or "",
 
-            event.get(
-                "action",
-                ""
-            ),
+                event.get(
+                    "status",
+                    ""
+                ) or "",
 
-            event.get(
-                "status",
-                ""
-            ),
+                event.get(
+                    "message",
+                    ""
+                ) or "",
 
-            event.get(
-                "message",
-                ""
-            ),
+                event.get(
+                    "severity",
+                    "LOW"
+                ) or "LOW",
 
-            event.get(
-                "severity",
-                "LOW"
-            ),
-
-            event.get(
-                "port"
+                event.get(
+                    "port"
+                )
             )
         )
-    )
 
-    event_id = cursor.lastrowid
+        event_id = cursor.lastrowid
 
-    connection.commit()
+        connection.commit()
 
-    connection.close()
-
-    return event_id
+        return event_id
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -285,33 +292,33 @@ def insert_event(event):
 def get_recent_events(limit=100):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                timestamp,
+                source_ip,
+                username,
+                event_type,
+                action,
+                status,
+                message,
+                severity,
+                port
 
-    rows = connection.execute(
-        """
-        SELECT
-            id,
-            timestamp,
-            source_ip,
-            username,
-            event_type,
-            action,
-            status,
-            message,
-            severity,
-            port
+            FROM security_events
 
-        FROM security_events
+            ORDER BY id DESC
 
-        ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,)
+        ).fetchall()
 
-        LIMIT ?
-        """,
-        (limit,)
-    ).fetchall()
-
-    connection.close()
-
-    return [dict(row) for row in rows]
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -321,18 +328,18 @@ def get_recent_events(limit=100):
 def get_total_event_count():
 
     connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT COUNT(*) AS count
 
-    row = connection.execute(
-        """
-        SELECT COUNT(*) AS count
+            FROM security_events
+            """
+        ).fetchone()
 
-        FROM security_events
-        """
-    ).fetchone()
-
-    connection.close()
-
-    return row["count"]
+        return row["count"] if row else 0
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -345,38 +352,38 @@ def get_events_by_source_ip(
 ):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                timestamp,
+                source_ip,
+                username,
+                event_type,
+                action,
+                status,
+                message,
+                severity,
+                port
 
-    rows = connection.execute(
-        """
-        SELECT
-            id,
-            timestamp,
-            source_ip,
-            username,
-            event_type,
-            action,
-            status,
-            message,
-            severity,
-            port
+            FROM security_events
 
-        FROM security_events
+            WHERE source_ip = ?
 
-        WHERE source_ip = ?
+            ORDER BY id DESC
 
-        ORDER BY id DESC
+            LIMIT ?
+            """,
+            (
+                source_ip,
+                limit
+            )
+        ).fetchall()
 
-        LIMIT ?
-        """,
-        (
-            source_ip,
-            limit
-        )
-    ).fetchall()
-
-    connection.close()
-
-    return [dict(row) for row in rows]
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -391,42 +398,42 @@ def get_events_by_source_ip_time_window(
 ):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                timestamp,
+                source_ip,
+                username,
+                event_type,
+                action,
+                status,
+                message,
+                severity,
+                port
 
-    rows = connection.execute(
-        """
-        SELECT
-            id,
-            timestamp,
-            source_ip,
-            username,
-            event_type,
-            action,
-            status,
-            message,
-            severity,
-            port
+            FROM security_events
 
-        FROM security_events
+            WHERE source_ip = ?
+              AND timestamp >= ?
+              AND timestamp <= ?
 
-        WHERE source_ip = ?
-          AND timestamp >= ?
-          AND timestamp <= ?
+            ORDER BY id ASC
 
-        ORDER BY id ASC
+            LIMIT ?
+            """,
+            (
+                source_ip,
+                start_time,
+                end_time,
+                limit
+            )
+        ).fetchall()
 
-        LIMIT ?
-        """,
-        (
-            source_ip,
-            start_time,
-            end_time,
-            limit
-        )
-    ).fetchall()
-
-    connection.close()
-
-    return [dict(row) for row in rows]
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -439,27 +446,27 @@ def incident_exists(
 ):
 
     connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT incident_id
 
-    row = connection.execute(
-        """
-        SELECT incident_id
+            FROM incidents
 
-        FROM incidents
+            WHERE alert_type = ?
+            AND source_ip = ?
 
-        WHERE alert_type = ?
-        AND source_ip = ?
+            LIMIT 1
+            """,
+            (
+                alert_type,
+                source_ip
+            )
+        ).fetchone()
 
-        LIMIT 1
-        """,
-        (
-            alert_type,
-            source_ip
-        )
-    ).fetchone()
-
-    connection.close()
-
-    return row is not None
+        return row is not None
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -468,118 +475,121 @@ def incident_exists(
 
 def create_incident(alert):
 
+    if not alert or not isinstance(alert, dict):
+        alert = {}
+
     connection = get_connection()
+    try:
+        cursor = connection.cursor()
 
-    cursor = connection.cursor()
+        # --------------------------------------------------
+        # GENERATE INCIDENT ID
+        # --------------------------------------------------
 
-    # --------------------------------------------------
-    # GENERATE INCIDENT ID
-    # --------------------------------------------------
-
-    row = cursor.execute(
-        """
-        SELECT MAX(
-            CAST(
-                SUBSTR(incident_id, 5)
-                AS INTEGER
-            )
-        ) AS max_number
-
-        FROM incidents
-        """
-    ).fetchone()
-
-    max_number = row["max_number"] or 0
-
-    incident_id = f"INC-{max_number + 1:04d}"
-
-    now = datetime.now().isoformat()
-
-    # --------------------------------------------------
-    # DESCRIPTION
-    # --------------------------------------------------
-
-    description = (
-        alert.get("description")
-        or alert.get("message")
-        or "Security incident detected."
-    )
-
-    # --------------------------------------------------
-    # INSERT INCIDENT
-    # --------------------------------------------------
-
-    cursor.execute(
-        """
-        INSERT INTO incidents (
-
-            incident_id,
-            alert_type,
-            title,
-            source_ip,
-            severity,
-            risk_score,
-            mitre_technique,
-            description,
-            status,
-            created_at,
-            updated_at
-
-        )
-
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            incident_id,
-
-            alert.get(
-                "alert_type",
-                alert.get(
-                    "type",
-                    "UNKNOWN"
+        row = cursor.execute(
+            """
+            SELECT MAX(
+                CAST(
+                    SUBSTR(incident_id, 5)
+                    AS INTEGER
                 )
-            ),
+            ) AS max_number
 
-            alert.get(
-                "title",
-                "Security Incident"
-            ),
+            FROM incidents
+            """
+        ).fetchone()
 
-            alert.get(
-                "source_ip",
-                ""
-            ),
+        max_number = (row["max_number"] if row else 0) or 0
 
-            alert.get(
-                "severity",
-                "LOW"
-            ),
+        incident_id = f"INC-{max_number + 1:04d}"
 
-            alert.get(
-                "risk_score",
-                0
-            ),
+        now = datetime.now().isoformat()
 
-            alert.get(
-                "mitre_technique",
-                "N/A"
-            ),
+        # --------------------------------------------------
+        # DESCRIPTION
+        # --------------------------------------------------
 
-            description,
-
-            "NEW",
-
-            now,
-
-            now
+        description = (
+            alert.get("description")
+            or alert.get("message")
+            or "Security incident detected."
         )
-    )
 
-    connection.commit()
+        # --------------------------------------------------
+        # INSERT INCIDENT
+        # --------------------------------------------------
 
-    connection.close()
+        cursor.execute(
+            """
+            INSERT INTO incidents (
 
-    return incident_id
+                incident_id,
+                alert_type,
+                title,
+                source_ip,
+                severity,
+                risk_score,
+                mitre_technique,
+                description,
+                status,
+                created_at,
+                updated_at
+
+            )
+
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                incident_id,
+
+                alert.get(
+                    "alert_type",
+                    alert.get(
+                        "type",
+                        "UNKNOWN"
+                    )
+                ),
+
+                alert.get(
+                    "title",
+                    "Security Incident"
+                ),
+
+                alert.get(
+                    "source_ip",
+                    ""
+                ),
+
+                alert.get(
+                    "severity",
+                    "LOW"
+                ),
+
+                alert.get(
+                    "risk_score",
+                    0
+                ),
+
+                alert.get(
+                    "mitre_technique",
+                    "N/A"
+                ),
+
+                description,
+
+                "NEW",
+
+                now,
+
+                now
+            )
+        )
+
+        connection.commit()
+
+        return incident_id
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -589,34 +599,34 @@ def create_incident(alert):
 def get_incidents(limit=100):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                incident_id,
+                alert_type,
+                title,
+                source_ip,
+                severity,
+                risk_score,
+                mitre_technique,
+                description,
+                status,
+                created_at,
+                updated_at
 
-    rows = connection.execute(
-        """
-        SELECT
-            incident_id,
-            alert_type,
-            title,
-            source_ip,
-            severity,
-            risk_score,
-            mitre_technique,
-            description,
-            status,
-            created_at,
-            updated_at
+            FROM incidents
 
-        FROM incidents
+            ORDER BY id DESC
 
-        ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,)
+        ).fetchall()
 
-        LIMIT ?
-        """,
-        (limit,)
-    ).fetchall()
-
-    connection.close()
-
-    return [dict(row) for row in rows]
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -626,51 +636,51 @@ def get_incidents(limit=100):
 def get_all_incidents():
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                incident_id,
+                alert_type,
+                title,
+                source_ip,
+                severity,
+                risk_score,
+                mitre_technique,
+                description,
+                status,
+                created_at,
+                updated_at
 
-    rows = connection.execute(
-        """
-        SELECT
-            incident_id,
-            alert_type,
-            title,
-            source_ip,
-            severity,
-            risk_score,
-            mitre_technique,
-            description,
-            status,
-            created_at,
-            updated_at
+            FROM incidents
 
-        FROM incidents
+            ORDER BY id DESC
+            """
+        ).fetchall()
 
-        ORDER BY id DESC
-        """
-    ).fetchall()
+        incidents = []
 
-    connection.close()
+        for row in rows:
 
-    incidents = []
+            incidents.append(
+                {
+                    "incident_id": row["incident_id"],
+                    "alert_type": row["alert_type"],
+                    "title": row["title"],
+                    "source_ip": row["source_ip"],
+                    "severity": row["severity"],
+                    "risk_score": row["risk_score"],
+                    "mitre_technique": row["mitre_technique"],
+                    "description": row["description"],
+                    "status": row["status"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"]
+                }
+            )
 
-    for row in rows:
-
-        incidents.append(
-            {
-                "incident_id": row["incident_id"],
-                "alert_type": row["alert_type"],
-                "title": row["title"],
-                "source_ip": row["source_ip"],
-                "severity": row["severity"],
-                "risk_score": row["risk_score"],
-                "mitre_technique": row["mitre_technique"],
-                "description": row["description"],
-                "status": row["status"],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"]
-            }
-        )
-
-    return incidents
+        return incidents
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -683,69 +693,7 @@ def link_event_to_incident(
 ):
 
     connection = get_connection()
-
-    existing = connection.execute(
-        """
-        SELECT 1
-
-        FROM incident_events
-
-        WHERE incident_id = ?
-          AND event_id = ?
-
-        LIMIT 1
-        """,
-        (
-            incident_id,
-            event_id
-        )
-    ).fetchone()
-
-    if existing:
-
-        connection.close()
-
-        return False
-
-    connection.execute(
-        """
-        INSERT INTO incident_events (
-            incident_id,
-            event_id,
-            linked_at
-        )
-
-        VALUES (?, ?, ?)
-        """,
-        (
-            incident_id,
-            event_id,
-            datetime.now().isoformat()
-        )
-    )
-
-    connection.commit()
-
-    connection.close()
-
-    return True
-
-
-# --------------------------------------------------
-# LINK MULTIPLE EVENTS TO INCIDENT
-# --------------------------------------------------
-
-def link_events_to_incident(
-    incident_id,
-    event_ids
-):
-
-    connection = get_connection()
-
-    now = datetime.now().isoformat()
-
-    for event_id in event_ids:
-
+    try:
         existing = connection.execute(
             """
             SELECT 1
@@ -764,8 +712,7 @@ def link_events_to_incident(
         ).fetchone()
 
         if existing:
-
-            continue
+            return False
 
         connection.execute(
             """
@@ -780,13 +727,72 @@ def link_events_to_incident(
             (
                 incident_id,
                 event_id,
-                now
+                datetime.now().isoformat()
             )
         )
 
-    connection.commit()
+        connection.commit()
 
-    connection.close()
+        return True
+    finally:
+        connection.close()
+
+
+# --------------------------------------------------
+# LINK MULTIPLE EVENTS TO INCIDENT
+# --------------------------------------------------
+
+def link_events_to_incident(
+    incident_id,
+    event_ids
+):
+
+    connection = get_connection()
+    try:
+        now = datetime.now().isoformat()
+
+        for event_id in event_ids:
+
+            existing = connection.execute(
+                """
+                SELECT 1
+
+                FROM incident_events
+
+                WHERE incident_id = ?
+                  AND event_id = ?
+
+                LIMIT 1
+                """,
+                (
+                    incident_id,
+                    event_id
+                )
+            ).fetchone()
+
+            if existing:
+                continue
+
+            connection.execute(
+                """
+                INSERT INTO incident_events (
+                    incident_id,
+                    event_id,
+                    linked_at
+                )
+
+                VALUES (?, ?, ?)
+                """,
+                (
+                    incident_id,
+                    event_id,
+                    now
+                )
+            )
+
+        connection.commit()
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -799,23 +805,23 @@ def unlink_event_from_incident(
 ):
 
     connection = get_connection()
+    try:
+        connection.execute(
+            """
+            DELETE FROM incident_events
 
-    connection.execute(
-        """
-        DELETE FROM incident_events
-
-        WHERE incident_id = ?
-          AND event_id = ?
-        """,
-        (
-            incident_id,
-            event_id
+            WHERE incident_id = ?
+              AND event_id = ?
+            """,
+            (
+                incident_id,
+                event_id
+            )
         )
-    )
 
-    connection.commit()
-
-    connection.close()
+        connection.commit()
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -827,36 +833,36 @@ def get_incident_events(
 ):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                e.id,
+                e.timestamp,
+                e.source_ip,
+                e.username,
+                e.event_type,
+                e.action,
+                e.status,
+                e.message,
+                e.severity,
+                e.port
 
-    rows = connection.execute(
-        """
-        SELECT
-            e.id,
-            e.timestamp,
-            e.source_ip,
-            e.username,
-            e.event_type,
-            e.action,
-            e.status,
-            e.message,
-            e.severity,
-            e.port
+            FROM security_events e
 
-        FROM security_events e
+            INNER JOIN incident_events ie
+                ON e.id = ie.event_id
 
-        INNER JOIN incident_events ie
-            ON e.id = ie.event_id
+            WHERE ie.incident_id = ?
 
-        WHERE ie.incident_id = ?
+            ORDER BY e.id ASC
+            """,
+            (incident_id,)
+        ).fetchall()
 
-        ORDER BY e.id ASC
-        """,
-        (incident_id,)
-    ).fetchall()
-
-    connection.close()
-
-    return [dict(row) for row in rows]
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -868,25 +874,26 @@ def get_event_incidents(
 ):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                incident_id
 
-    rows = connection.execute(
-        """
-        SELECT
-            incident_id
+            FROM incident_events
 
-        FROM incident_events
+            WHERE event_id = ?
+            """,
+            (event_id,)
+        ).fetchall()
 
-        WHERE event_id = ?
-        """,
-        (event_id,)
-    ).fetchall()
+        return [
+            row["incident_id"]
+            for row in rows
+        ]
+    finally:
+        connection.close()
 
-    connection.close()
-
-    return [
-        row["incident_id"]
-        for row in rows
-    ]
 
 # --------------------------------------------------
 # GET INCIDENT EVENT COUNT
@@ -897,23 +904,25 @@ def get_incident_event_count(
 ):
 
     connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT COUNT(*) AS event_count
 
-    row = connection.execute(
-        """
-        SELECT COUNT(*) AS event_count
+            FROM incident_events
 
-        FROM incident_events
+            WHERE incident_id = ?
+            """,
+            (
+                incident_id,
+            )
+        ).fetchone()
 
-        WHERE incident_id = ?
-        """,
-        (
-            incident_id,
-        )
-    ).fetchone()
+        return row["event_count"] if row else 0
+    finally:
+        connection.close()
 
-    connection.close()
 
-    return row["event_count"]
 # --------------------------------------------------
 # UPDATE INCIDENT STATUS
 # --------------------------------------------------
@@ -924,110 +933,104 @@ def update_incident_status(
 ):
 
     allowed_transitions = {
-        "NEW": ["TRIAGED", "CONTAINED"],
-        "TRIAGED": ["INVESTIGATING"],
-        "INVESTIGATING": ["CONTAINED"],
-        "CONTAINED": ["RESOLVED"],
-        "RESOLVED": []
+        "NEW": ["TRIAGED", "INVESTIGATING", "CONTAINED", "RESOLVED"],
+        "TRIAGED": ["INVESTIGATING", "CONTAINED", "RESOLVED", "NEW"],
+        "INVESTIGATING": ["CONTAINED", "RESOLVED", "TRIAGED"],
+        "CONTAINED": ["INVESTIGATING", "RESOLVED", "TRIAGED"],
+        "RESOLVED": ["INVESTIGATING", "TRIAGED", "NEW"]
     }
 
     connection = get_connection()
+    try:
+        cursor = connection.cursor()
 
-    cursor = connection.cursor()
-
-    # --------------------------------------------------
-    # GET CURRENT STATUS
-    # --------------------------------------------------
-
-    cursor.execute(
-        """
-        SELECT status
-
-        FROM incidents
-
-        WHERE incident_id = ?
-        """,
-        (incident_id,)
-    )
-
-    incident = cursor.fetchone()
-
-    if incident is None:
-
-        connection.close()
-
-        return 0
-
-    current_status = incident["status"]
-
-    # --------------------------------------------------
-    # VALIDATE STATUS TRANSITION
-    # --------------------------------------------------
-
-    if status not in allowed_transitions.get(
-        current_status,
-        []
-    ):
-
-        connection.close()
-
-        return 0
-
-    # --------------------------------------------------
-    # UPDATE INCIDENT
-    # --------------------------------------------------
-
-    updated_at = datetime.now().isoformat()
-
-    cursor.execute(
-        """
-        UPDATE incidents
-
-        SET
-            status = ?,
-            updated_at = ?
-
-        WHERE incident_id = ?
-        """,
-        (
-            status,
-            updated_at,
-            incident_id
-        )
-    )
-
-    updated_rows = cursor.rowcount
-
-    # --------------------------------------------------
-    # RECORD STATUS HISTORY
-    # --------------------------------------------------
-
-    if updated_rows == 1:
+        # --------------------------------------------------
+        # GET CURRENT STATUS
+        # --------------------------------------------------
 
         cursor.execute(
             """
-            INSERT INTO incident_status_history (
-                incident_id,
-                old_status,
-                new_status,
-                changed_at
-            )
+            SELECT status
 
-            VALUES (?, ?, ?, ?)
+            FROM incidents
+
+            WHERE incident_id = ?
+            """,
+            (incident_id,)
+        )
+
+        incident = cursor.fetchone()
+
+        if incident is None:
+            return 0
+
+        current_status = incident["status"]
+
+        # --------------------------------------------------
+        # VALIDATE STATUS TRANSITION
+        # --------------------------------------------------
+
+        if status not in allowed_transitions.get(
+            current_status,
+            []
+        ):
+            return 0
+
+        # --------------------------------------------------
+        # UPDATE INCIDENT
+        # --------------------------------------------------
+
+        updated_at = datetime.now().isoformat()
+
+        cursor.execute(
+            """
+            UPDATE incidents
+
+            SET
+                status = ?,
+                updated_at = ?
+
+            WHERE incident_id = ?
             """,
             (
-                incident_id,
-                current_status,
                 status,
-                updated_at
+                updated_at,
+                incident_id
             )
         )
 
-    connection.commit()
+        updated_rows = cursor.rowcount
 
-    connection.close()
+        # --------------------------------------------------
+        # RECORD STATUS HISTORY
+        # --------------------------------------------------
 
-    return updated_rows
+        if updated_rows == 1:
+
+            cursor.execute(
+                """
+                INSERT INTO incident_status_history (
+                    incident_id,
+                    old_status,
+                    new_status,
+                    changed_at
+                )
+
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    incident_id,
+                    current_status,
+                    status,
+                    updated_at
+                )
+            )
+
+        connection.commit()
+
+        return updated_rows
+    finally:
+        connection.close()
 
 
 # --------------------------------------------------
@@ -1039,25 +1042,25 @@ def get_incident_status_history(
 ):
 
     connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                incident_id,
+                old_status,
+                new_status,
+                changed_at
 
-    rows = connection.execute(
-        """
-        SELECT
-            id,
-            incident_id,
-            old_status,
-            new_status,
-            changed_at
+            FROM incident_status_history
 
-        FROM incident_status_history
+            WHERE incident_id = ?
 
-        WHERE incident_id = ?
+            ORDER BY id ASC
+            """,
+            (incident_id,)
+        ).fetchall()
 
-        ORDER BY id ASC
-        """,
-        (incident_id,)
-    ).fetchall()
-
-    connection.close()
-
-    return [dict(row) for row in rows]
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()

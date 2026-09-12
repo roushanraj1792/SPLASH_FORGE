@@ -54,3 +54,22 @@ def test_telegram_incident_alert():
     assert result.get("success") is True, (
         f"Telegram incident alert failed: {result.get('message')}"
     )
+
+
+def test_telegram_incident_alert_html_escaping():
+    incident = {
+        "incident_id": "TEST-HTML-<002>",
+        "title": "Suspicious <Command> & Execution",
+        "severity": "HIGH",
+        "source_ip": "192.168.1.251",
+        "risk_score": 75,
+        "mitre_technique": "T1059.001 <PowerShell>",
+    }
+
+    result = send_incident_alert(incident)
+    # If the token is valid, message should succeed without entity parse errors
+    if result.get("success"):
+        assert result.get("success") is True
+    else:
+        # Must not fail due to malformed Telegram HTML entity tags
+        assert "can't parse entities" not in result.get("message", "").lower()

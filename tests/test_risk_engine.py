@@ -41,3 +41,31 @@ def test_alert_risk_enrichment():
     assert enriched["risk_level"] == "HIGH"
     assert enriched["alert_type"] == "BRUTE_FORCE"
     assert enriched["source_ip"] == "192.168.1.50"
+
+
+def test_risk_engine_edge_cases():
+    # None and empty inputs
+    assert calculate_risk_score(None) == 20
+    assert calculate_risk_score({}) == 20
+    assert calculate_risk_score({"severity": None}) == 20
+    assert calculate_risk_score({"severity": "INVALID_VAL"}) == 20
+
+    # Level checks for boundary and invalid values
+    assert get_risk_level("not_a_number") == "LOW"
+    assert get_risk_level(80) == "CRITICAL"
+    assert get_risk_level(60) == "HIGH"
+    assert get_risk_level(30) == "MEDIUM"
+    assert get_risk_level(29) == "LOW"
+
+    # None alert enrichment
+    res = enrich_alert_with_risk(None)
+    assert res["risk_score"] == 20
+    assert res["risk_level"] == "LOW"
+
+
+if __name__ == "__main__":
+    test_risk_scores_and_levels()
+    test_alert_risk_enrichment()
+    test_risk_engine_edge_cases()
+    print("test_risk_engine: ALL PASS")
+

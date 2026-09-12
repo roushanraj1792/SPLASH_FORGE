@@ -19,23 +19,36 @@ def detect_port_scan(events):
     alerts = []
 
     for event in events:
-
-        if event["event_type"] != "NETWORK_CONNECTION":
+        if not isinstance(event, dict):
             continue
 
-        source_ip = event["source_ip"]
+        if event.get("event_type") != "NETWORK_CONNECTION":
+            continue
+
+        source_ip = event.get("source_ip")
+        if not source_ip:
+            continue
+
+        raw_ts = event.get("timestamp")
+        if not raw_ts:
+            continue
 
         try:
             event_time = datetime.fromisoformat(
-                event["timestamp"].replace("Z", "+00:00")
+                str(raw_ts).replace("Z", "+00:00")
             )
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
         port = event.get("port")
+        if port is not None:
+            try:
+                port = int(port)
+            except (ValueError, TypeError):
+                port = str(port).strip()
 
         source_connections[source_ip].append({
-            "id": event["id"],
+            "id": event.get("id"),
             "timestamp": event_time,
             "port": port
         })
@@ -93,7 +106,7 @@ def detect_port_scan(events):
                     ),
                     "evidence": {
                         "unique_ports": len(unique_ports),
-                        "ports": sorted(unique_ports),
+                        "ports": sorted(unique_ports, key=lambda x: (isinstance(x, str), x)),
                         "source_ip": source_ip,
                         "event_ids": event_ids
                     }

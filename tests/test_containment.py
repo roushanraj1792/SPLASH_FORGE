@@ -13,7 +13,11 @@ from services.risk_engine import enrich_alert_with_risk
 from services.containment import (
     initialize_containment_tables,
     block_source_ip,
+    unblock_source_ip,
+    is_source_blocked,
+    get_source_containment_details,
     get_containment_actions,
+    verify_source_containment,
 )
 
 
@@ -153,3 +157,89 @@ def test_containment_engine():
     assert latest_action.get("status") == "SUCCESS"
 
     assert latest_action.get("source_ip") == SOURCE_IP
+
+    # --------------------------------------------------
+    # STEP 8: Verify active containment state & duplicate block
+    # --------------------------------------------------
+
+    assert is_source_blocked(SOURCE_IP) is True
+    details = get_source_containment_details(SOURCE_IP)
+    assert details is not None
+    assert details.get("active") is True
+    assert details.get("status") == "BLOCKED"
+
+    # Duplicate block should return ALREADY_BLOCKED safely
+    duplicate_res = block_source_ip(
+        incident_id,
+        SOURCE_IP,
+        "Duplicate block check"
+    )
+    assert duplicate_res.get("status") == "ALREADY_BLOCKED"
+
+    # --------------------------------------------------
+    # STEP 9: Reversible containment (unblock)
+    # --------------------------------------------------
+
+    unblock_res = unblock_source_ip(
+        incident_id,
+        SOURCE_IP,
+        "Analyst verified false-positive / remediation completed"
+    )
+    assert unblock_res.get("success") is True
+    assert unblock_res.get("status") == "SUCCESS"
+    assert is_source_blocked(SOURCE_IP) is False
+
+    updated_details = get_source_containment_details(SOURCE_IP)
+    assert updated_details is not None
+    assert updated_details.get("active") is False
+    assert updated_details.get("status") == "UNBLOCKED"
+
+    # Attempting to unblock an already unblocked IP should fail safely
+    unblock_again = unblock_source_ip(
+        incident_id,
+        SOURCE_IP,
+        "Second unblock attempt"
+    )
+    assert unblock_again.get("success") is False
+    assert unblock_again.get("status") == "NOT_BLOCKED"
+
+    # --------------------------------------------------
+    # STEP 10: Re-block after unblock (UPSERT verification)
+    # --------------------------------------------------
+
+    reblock_res = block_source_ip(
+        incident_id,
+        SOURCE_IP,
+        "Re-blocking source after new threat detected"
+    )
+    assert reblock_res.get("success") is True
+    assert reblock_res.get("status") == "SUCCESS"
+    assert is_source_blocked(SOURCE_IP) is True
+
+    # --------------------------------------------------
+    # STEP 11: Closed-Loop Post-Containment Verification
+    # --------------------------------------------------
+
+    # With no subsequent events, containment is verified clean
+    clean_verif = verify_source_containment(SOURCE_IP, events)
+    assert clean_verif["is_contained"] is True
+    assert clean_verif["is_verified"] is True
+    assert clean_verif["subsequent_events_count"] == 0
+
+    # With a simulated leak event occurring AFTER containment
+    leak_event = {
+        "timestamp": "2099-01-01T00:00:00Z",
+        "source_ip": SOURCE_IP,
+        "event_type": "LOGIN",
+        "status": "FAILED"
+    }
+    leaked_verif = verify_source_containment(SOURCE_IP, [leak_event])
+    assert leaked_verif["is_contained"] is True
+    assert leaked_verif["is_verified"] is False
+    assert leaked_verif["subsequent_events_count"] == 1
+
+
+if __name__ == "__main__":
+    test_containment_engine()
+    print("test_containment_engine: PASS")
+

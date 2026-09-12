@@ -1,3 +1,4 @@
+import html
 import os
 import requests
 from datetime import datetime
@@ -110,35 +111,35 @@ def send_test_alert():
 
 def send_incident_alert(incident):
 
-    incident_id = incident.get(
+    incident_id = html.escape(str(incident.get(
         "incident_id",
         "UNKNOWN"
-    )
+    )))
 
-    title = incident.get(
+    title = html.escape(str(incident.get(
         "title",
         "Security Incident"
-    )
+    )))
 
-    severity = incident.get(
+    severity = html.escape(str(incident.get(
         "severity",
         "UNKNOWN"
-    )
+    )))
 
-    source_ip = incident.get(
+    source_ip = html.escape(str(incident.get(
         "source_ip",
         "UNKNOWN"
-    )
+    )))
 
-    risk_score = incident.get(
+    risk_score = html.escape(str(incident.get(
         "risk_score",
         "N/A"
-    )
+    )))
 
-    mitre = incident.get(
+    mitre = html.escape(str(incident.get(
         "mitre_technique",
         "N/A"
-    )
+    )))
 
     message = (
         "🚨 SentinelX Security Alert\n\n"

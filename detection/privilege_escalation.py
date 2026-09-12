@@ -12,25 +12,33 @@ def detect_privilege_escalation(events):
     alerts = []
 
     for event in events:
-
-        if event["event_type"] != "PRIVILEGE_CHANGE":
+        if not isinstance(event, dict):
             continue
 
-        if event["status"] != "SUCCESS":
+        if event.get("event_type") != "PRIVILEGE_CHANGE":
             continue
 
-        source_ip = event["source_ip"]
+        if event.get("status") != "SUCCESS":
+            continue
+
+        source_ip = event.get("source_ip")
+        if not source_ip:
+            continue
+
+        raw_ts = event.get("timestamp")
+        if not raw_ts:
+            continue
 
         try:
             event_time = datetime.fromisoformat(
-                event["timestamp"].replace("Z", "+00:00")
+                str(raw_ts).replace("Z", "+00:00")
             )
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
         suspicious_events[source_ip].append(
             {
-                "id": event["id"],
+                "id": event.get("id"),
                 "timestamp": event_time,
                 "event": event
             }

@@ -24,17 +24,21 @@ def detect_suspicious_powershell(events):
     alerts = []
 
     for event in events:
-
-        if event["event_type"] != "POWERSHELL":
+        if not isinstance(event, dict):
             continue
 
-        source_ip = event["source_ip"]
-        message = (event["message"] or "").lower()
+        if event.get("event_type") != "POWERSHELL":
+            continue
+
+        source_ip = event.get("source_ip")
+        if not source_ip:
+            continue
+
+        message = str(event.get("message") or "").lower()
 
         matched_pattern = None
 
         for pattern in SUSPICIOUS_PATTERNS:
-
             if pattern in message:
                 matched_pattern = pattern
                 break
@@ -42,16 +46,20 @@ def detect_suspicious_powershell(events):
         if matched_pattern is None:
             continue
 
+        raw_ts = event.get("timestamp")
+        if not raw_ts:
+            continue
+
         try:
             event_time = datetime.fromisoformat(
-                event["timestamp"].replace("Z", "+00:00")
+                str(raw_ts).replace("Z", "+00:00")
             )
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
         suspicious_events[source_ip].append(
             {
-                "id": event["id"],
+                "id": event.get("id"),
                 "timestamp": event_time,
                 "pattern": matched_pattern
             }

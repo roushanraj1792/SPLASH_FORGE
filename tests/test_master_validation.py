@@ -37,6 +37,9 @@ def run_test(name, test_file):
         result = subprocess.run(
             [
                 sys.executable,
+                "-m",
+                "pytest",
+                "-v",
                 str(test_file)
             ],
             cwd=str(ROOT),

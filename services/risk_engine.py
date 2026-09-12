@@ -9,7 +9,10 @@ SEVERITY_SCORES = {
 
 
 def calculate_risk_score(alert):
-    severity = alert.get("severity", "LOW").upper()
+    if not alert or not isinstance(alert, dict):
+        return SEVERITY_SCORES["LOW"]
+
+    severity = str(alert.get("severity") or "LOW").strip().upper()
 
     score = SEVERITY_SCORES.get(
         severity,
@@ -20,23 +23,31 @@ def calculate_risk_score(alert):
 
 
 def get_risk_level(score):
-    if score >= 80:
+    try:
+        score_val = float(score)
+    except (ValueError, TypeError):
+        score_val = 0.0
+
+    if score_val >= 80:
         return "CRITICAL"
-    elif score >= 60:
+    elif score_val >= 60:
         return "HIGH"
-    elif score >= 30:
+    elif score_val >= 30:
         return "MEDIUM"
     else:
         return "LOW"
 
 
 def enrich_alert_with_risk(alert):
-    score = calculate_risk_score(alert)
+    if not alert or not isinstance(alert, dict):
+        alert_dict = {}
+    else:
+        alert_dict = dict(alert)
+
+    score = calculate_risk_score(alert_dict)
     risk_level = get_risk_level(score)
 
-    enriched_alert = dict(alert)
+    alert_dict["risk_score"] = score
+    alert_dict["risk_level"] = risk_level
 
-    enriched_alert["risk_score"] = score
-    enriched_alert["risk_level"] = risk_level
-
-    return enriched_alert
+    return alert_dict

@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
 ALERT_TYPE = "SUSPICIOUS_AUTH"
 MITRE_TECHNIQUE = "T1078"
@@ -15,7 +15,8 @@ def detect_suspicious_authentication(events):
     login_events = [
         event
         for event in events
-        if str(event.get("event_type", "")).upper() == "LOGIN"
+        if isinstance(event, dict)
+        and str(event.get("event_type", "")).upper() == "LOGIN"
         and str(event.get("action", "")).upper() == "LOGIN"
         and str(event.get("status", "")).upper() == "SUCCESS"
     ]
@@ -40,7 +41,7 @@ def detect_suspicious_authentication(events):
 
             try:
                 start_time = datetime.fromisoformat(
-                    str(ip_events[i]["timestamp"])
+                    str(ip_events[i].get("timestamp", "")).replace("Z", "+00:00")
                 )
             except (ValueError, TypeError, KeyError):
                 continue
@@ -51,7 +52,7 @@ def detect_suspicious_authentication(events):
 
                 try:
                     event_time = datetime.fromisoformat(
-                        str(event["timestamp"])
+                        str(event.get("timestamp", "")).replace("Z", "+00:00")
                     )
                 except (ValueError, TypeError, KeyError):
                     continue

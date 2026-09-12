@@ -1,4 +1,4 @@
-﻿from collections import defaultdict
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 FAILED_ATTEMPT_THRESHOLD = 5
@@ -17,21 +17,32 @@ def detect_brute_force(events):
     failed_attempts = defaultdict(list)
 
     for event in events:
+        if not isinstance(event, dict):
+            continue
+
         if (
-            event["event_type"] != "LOGIN"
-            or event["status"] != "FAILED"
+            event.get("event_type") != "LOGIN"
+            or event.get("status") != "FAILED"
         ):
+            continue
+
+        source_ip = event.get("source_ip")
+        if not source_ip:
+            continue
+
+        raw_ts = event.get("timestamp")
+        if not raw_ts:
             continue
 
         try:
             event_time = datetime.fromisoformat(
-                event["timestamp"].replace("Z", "+00:00")
+                str(raw_ts).replace("Z", "+00:00")
             )
         except (ValueError, TypeError):
             continue
 
-        failed_attempts[event["source_ip"]].append({
-            "id": event["id"],
+        failed_attempts[source_ip].append({
+            "id": event.get("id"),
             "timestamp": event_time
         })
 
@@ -43,44 +54,45 @@ def detect_brute_force(events):
             reverse=True
         )
 
-        latest_event = failed_events[0]
-        window_end = latest_event["timestamp"]
-        window_start = window_end - timedelta(
-            minutes=TIME_WINDOW_MINUTES
-        )
-
-        matching_events = [
-            event
-            for event in failed_events
-            if window_start <= event["timestamp"] <= window_end
-        ]
-
-        if len(matching_events) >= FAILED_ATTEMPT_THRESHOLD:
-            matching_events.sort(
-                key=lambda item: item["timestamp"]
+        for anchor_event in failed_events:
+            window_end = anchor_event["timestamp"]
+            window_start = window_end - timedelta(
+                minutes=TIME_WINDOW_MINUTES
             )
 
-            event_ids = [
-                event["id"]
-                for event in matching_events
+            matching_events = [
+                event
+                for event in failed_events
+                if window_start <= event["timestamp"] <= window_end
             ]
 
-            alerts.append({
-                "alert_type": "BRUTE_FORCE",
-                "source_ip": source_ip,
-                "severity": "HIGH",
-                "mitre_technique": "T1110",
-                "title": "Brute Force Attack Detected",
-                "message": (
-                    f"{len(matching_events)} failed login attempts "
-                    f"detected from {source_ip} "
-                    f"within {TIME_WINDOW_MINUTES} minutes."
-                ),
-                "evidence": {
-                    "failed_attempts": len(matching_events),
+            if len(matching_events) >= FAILED_ATTEMPT_THRESHOLD:
+                matching_events.sort(
+                    key=lambda item: item["timestamp"]
+                )
+
+                event_ids = [
+                    event["id"]
+                    for event in matching_events
+                ]
+
+                alerts.append({
+                    "alert_type": "BRUTE_FORCE",
                     "source_ip": source_ip,
-                    "event_ids": event_ids
-                }
-            })
+                    "severity": "HIGH",
+                    "mitre_technique": "T1110",
+                    "title": "Brute Force Attack Detected",
+                    "message": (
+                        f"{len(matching_events)} failed login attempts "
+                        f"detected from {source_ip} "
+                        f"within {TIME_WINDOW_MINUTES} minutes."
+                    ),
+                    "evidence": {
+                        "failed_attempts": len(matching_events),
+                        "source_ip": source_ip,
+                        "event_ids": event_ids
+                    }
+                })
+                break
 
     return alerts

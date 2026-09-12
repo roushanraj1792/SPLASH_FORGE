@@ -14,6 +14,17 @@ import os
 import time
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -116,12 +127,12 @@ def execute_scenario(scenario_id):
         return False
 
     print(f"\n[>>> LAUNCHING SCENARIO [{scenario_id}]: {scenario['name']} <<<]")
-    print(f"  • Description        : {scenario['description']}")
-    print(f"  • Test Source IP     : {scenario['source_ip']}")
-    print(f"  • Expected Events    : {scenario['expected_events']}")
-    print(f"  • Expected Detector  : {scenario['detector']}")
-    print(f"  • MITRE ATT&CK       : {scenario['mitre']}")
-    print(f"  • Expected Risk/Sev  : {scenario['expected_severity']} ({scenario['expected_risk']})")
+    print(f"  * Description        : {scenario['description']}")
+    print(f"  * Test Source IP     : {scenario['source_ip']}")
+    print(f"  * Expected Events    : {scenario['expected_events']}")
+    print(f"  * Expected Detector  : {scenario['detector']}")
+    print(f"  * MITRE ATT&CK       : {scenario['mitre']}")
+    print(f"  * Expected Risk/Sev  : {scenario['expected_severity']} ({scenario['expected_risk']})")
     print("-" * 75)
 
     start_time = time.time()
@@ -130,16 +141,16 @@ def execute_scenario(scenario_id):
         elapsed = time.time() - start_time
 
         print("-" * 75)
-        print(f"[✓] Attack injection completed in {elapsed:.2f}s.")
-        print(f"[✓] Scenario Name     : {scenario['name']}")
-        print(f"[✓] Events Generated  : {len(event_ids) if event_ids else scenario['expected_events']}")
-        print(f"[✓] Test Source IP    : {scenario['source_ip']}")
+        print(f"[+] Attack injection completed in {elapsed:.2f}s.")
+        print(f"[+] Scenario Name     : {scenario['name']}")
+        print(f"[+] Events Generated  : {len(event_ids) if event_ids else scenario['expected_events']}")
+        print(f"[+] Test Source IP    : {scenario['source_ip']}")
         if event_ids:
-            print(f"[✓] Recorded Event IDs: {event_ids}")
-        print(f"[✓] Expected Detector : {scenario['detector']}")
-        print(f"[✓] MITRE Technique   : {scenario['mitre']}")
+            print(f"[+] Recorded Event IDs: {event_ids}")
+        print(f"[+] Expected Detector : {scenario['detector']}")
+        print(f"[+] MITRE Technique   : {scenario['mitre']}")
         print("\n[>>> INSTRUCTIONS FOR TEAMMATE B (SOC PRESENTER) <<<]")
-        print("  1. In SentinelX browser, click '🔄 Refresh Telemetry'")
+        print("  1. In SentinelX browser, click 'Refresh Telemetry'")
         print("  2. Navigate to 'Live Events': Observe raw ingested telemetry events")
         print("  3. Navigate to 'Security Alerts': Verify normalized alert and risk score")
         print("  4. Navigate to 'Incidents': Review correlated incident, lifecycle state, and AI Copilot analysis")
@@ -158,8 +169,8 @@ def execute_full_demo():
     for step in ["1", "2", "3", "4", "5"]:
         execute_scenario(step)
         time.sleep(1)
-    print("\n[✓] FULL MULTI-STAGE CAMPAIGN COMPLETED SUCCESSFULLY.")
-    print("[*] Teammate B: Click '🔄 Refresh Telemetry' in SentinelX to observe complete multi-stage correlation.")
+    print("\n[+] FULL MULTI-STAGE CAMPAIGN COMPLETED SUCCESSFULLY.")
+    print("[*] Teammate B: Click 'Refresh Telemetry' in SentinelX to observe complete multi-stage correlation.")
 
 
 def show_interactive_menu():
