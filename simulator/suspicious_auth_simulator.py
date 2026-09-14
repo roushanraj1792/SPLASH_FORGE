@@ -36,7 +36,7 @@ def submit_event(event):
 
 
 def simulate_suspicious_authentication():
-    print("SentinelX Suspicious Authentication Simulator")
+    print("SPLASH FORGE Suspicious Authentication Simulator")
     print("--------------------------------------------")
 
     attacker_ip = "192.168.1.70"

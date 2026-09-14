@@ -1,14 +1,14 @@
-# SentinelX — Autonomous Security Operations Center (Mini-SIEM)
+# SPLASH FORGE — Autonomous Security Operations Center (Mini-SIEM)
 
 > **Enterprise AI-Assisted Threat Detection, Incident Orchestration & Containment Platform**
 
-SentinelX is an autonomous Security Operations Center (SOC) and mini-SIEM platform engineered for real-time threat telemetry ingestion, deterministic rule correlation, explainable multi-factor risk scoring, automated host containment, and evidence-grounded AI copilot analysis.
+SPLASH FORGE is an autonomous Security Operations Center (SOC) and mini-SIEM platform engineered for real-time threat telemetry ingestion, deterministic rule correlation, explainable multi-factor risk scoring, automated host containment, and evidence-grounded AI copilot analysis.
 
 ---
 
 ## 🛡️ Core Architecture
 
-SentinelX processes host and network telemetry through a 9-stage pipeline:
+SPLASH FORGE processes host and network telemetry through a 9-stage pipeline:
 
 ```
 TELEMETRY INGESTION ──► DETECTION ENGINES ──► RISK SCORING ──► SECURITY ALERTS
@@ -33,7 +33,7 @@ AUDIT LEDGER ◄── SAFE CONTAINMENT ◄── MITRE ATT&CK ◄── EVIDENC
 
 ## 🖥️ Security Consoles
 
-SentinelX provides 6 dedicated operational consoles:
+SPLASH FORGE provides 6 dedicated operational consoles:
 
 - **Dashboard**: High-level SOC situational awareness, 4 core KPIs, visual SOC pipeline diagram, security posture scoring (0–100), threat landscape overview, and subsystem health indicators.
 - **Live Events**: Real-time security telemetry feed with full-text search, event type filtering, severity badges, and monospace forensic formatting.
@@ -67,7 +67,7 @@ Copy `.env.example` to `.env` and optionally configure API keys:
 ```powershell
 Copy-Item .env.example .env
 ```
-*Note: SentinelX includes automated deterministic fallbacks for all AI and alerting features, so an API key is not required to run full end-to-end demonstrations.*
+*Note: SPLASH FORGE includes automated deterministic fallbacks for all AI and alerting features, so an API key is not required to run full end-to-end demonstrations.*
 
 ### 4. Launch Application
 ```powershell
@@ -77,23 +77,23 @@ Open **`http://localhost:8501`** in your browser.
 
 ---
 
-## 🔬 What Makes SentinelX Different?
+## 🔬 What Makes SPLASH FORGE Different?
 
-Most cybersecurity hackathon projects are passive visualization dashboards with disconnected AI wrappers. SentinelX is a **closed-loop analyst decision-execution-verification platform**:
+Most cybersecurity hackathon projects are passive visualization dashboards with disconnected AI wrappers. SPLASH FORGE is a **closed-loop analyst decision-execution-verification platform**:
 
 1. **Deterministic Chain-of-Custody**: Incidents never reference vague summaries; every alert points to immutable SQLite foreign keys linking raw events.
-2. **Reversible Containment & Closed-Loop Verification**: Containment is not a one-way black hole. Analysts can quarantine high-risk hosts with a single click, audit the action, and safely revert/unblock the host when remediation is confirmed. Furthermore, SentinelX performs **real-time post-containment telemetry verification**, actively monitoring ingestion streams to mathematically verify zero subsequent packets from quarantined hosts (`THREAT NEUTRALIZED`).
+2. **Reversible Containment & Closed-Loop Verification**: Containment is not a one-way black hole. Analysts can quarantine high-risk hosts with a single click, audit the action, and safely revert/unblock the host when remediation is confirmed. Furthermore, SPLASH FORGE performs **real-time post-containment telemetry verification**, actively monitoring ingestion streams to mathematically verify zero subsequent packets from quarantined hosts (`THREAT NEUTRALIZED`).
 3. **One-Click Incident Forensic Dossier Export**: Instantly bundle complete incident profiles, telemetry chain-of-custody, chronological milestones, containment audit records, and AI threat analyses into structured JSON dossiers or executive-formatted Markdown briefings for SIEM archival, compliance, or external CSIRT handoff.
 4. **Integrated In-Console Attack Simulator**: Presenters and analysts can inject live multi-stage attack scenarios (Brute Force, Port Scan, Suspicious Auth, Privilege Escalation, Obfuscated PowerShell, or full campaigns) directly inside the Dashboard without leaving the browser.
 5. **Chronological Attack Chain / Threat Timeline**: Correlated events are automatically parsed into relative time offsets (`T+0s`, `T+12s`, ...) and classified into attack milestones (Reconnaissance, Credential Access, Execution, Privilege Escalation).
 6. **Observable Threat Indicators (IOCs)**: Grounded extraction of attacker IPs, targeted identities, ports, and observation windows directly from evidence.
-7. **Zero-Hallucination AI Copilot**: Powered by Google Gemini with strict guardrails—the AI is forbidden from fabricating timestamps, tools, or compromise states. If Gemini is unreachable or rate-limited, SentinelX automatically engages an equally structured deterministic rule-based engine.
+7. **Zero-Hallucination AI Copilot**: Powered by Google Gemini with strict guardrails—the AI is forbidden from fabricating timestamps, tools, or compromise states. If Gemini is unreachable or rate-limited, SPLASH FORGE automatically engages an equally structured deterministic rule-based engine.
 
 ---
 
 ## 🔄 Core Analyst Workflow
 
-SentinelX enforces a strict 9-stage investigative progression:
+SPLASH FORGE enforces a strict 9-stage investigative progression:
 
 ```
 [01] DETECTION ➔ [02] EVIDENCE ➔ [03] RISK SCORING ➔ [04] CONTEXT ➔ [05] MITRE MAPPING
@@ -135,7 +135,7 @@ powershell -ExecutionPolicy Bypass -File validate.ps1
 ## 🎬 3-Minute Hackathon Demo Flow
 
 1. **Minute 1: Situational Awareness & In-Console Threat Injection (Dashboard)**
-   - Open SentinelX at `http://localhost:8501`.
+   - Open SPLASH FORGE at `http://localhost:8501`.
    - Show the **Situational Briefing Bar** and **Security Posture Score** (e.g., `85/100`).
    - Expand **⚡ Threat Simulation & Live Attack Scenarios** directly on the Dashboard.
    - Click **"💥 Inject Multi-Stage Advanced Campaign"** (or run `python -m simulator.run_attack_demo` from CLI).

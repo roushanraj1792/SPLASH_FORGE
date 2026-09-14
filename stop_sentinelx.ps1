@@ -1,5 +1,5 @@
-# SentinelX Clean Shutdown Script
-Write-Host "Stopping SentinelX services..." -ForegroundColor Cyan
+# SPLASH FORGE Clean Shutdown Script
+Write-Host "Stopping SPLASH FORGE services..." -ForegroundColor Cyan
 
 # Stop cloudflared
 try {
@@ -36,4 +36,4 @@ if ($conns) {
 $urlFile = Join-Path $PSScriptRoot "tunnel_url.txt"
 if (Test-Path $urlFile) { Remove-Item $urlFile -Force }
 
-Write-Host "SentinelX shutdown complete." -ForegroundColor Green
+Write-Host "SPLASH FORGE shutdown complete." -ForegroundColor Green

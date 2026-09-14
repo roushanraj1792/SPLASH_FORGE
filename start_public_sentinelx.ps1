@@ -1,9 +1,9 @@
-# SentinelX Public Access Launcher
-# Boots SentinelX on port 8501 and creates a public HTTPS tunnel via Cloudflare
+# SPLASH FORGE Public Access Launcher
+# Boots SPLASH FORGE on port 8501 and creates a public HTTPS tunnel via Cloudflare
 $ErrorActionPreference = "Continue"
 
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "   SENTINELX SOC PLATFORM -- PUBLIC SECURE TUNNEL LAUNCHER      " -ForegroundColor Cyan
+Write-Host "   SPLASH FORGE SOC PLATFORM -- PUBLIC SECURE TUNNEL LAUNCHER   " -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
 $python = Join-Path $PSScriptRoot "venv\Scripts\python.exe"
@@ -15,14 +15,14 @@ if (-not (Test-Path $python)) {
 # 1. Start Streamlit if not running on port 8501
 $streamlitConn = Get-NetTCPConnection -LocalPort 8501 -State Listen -ErrorAction SilentlyContinue
 if (-not $streamlitConn) {
-    Write-Host "`n[1/3] Starting SentinelX Streamlit server on port 8501..." -ForegroundColor Yellow
+    Write-Host "`n[1/3] Starting SPLASH FORGE Streamlit server on port 8501..." -ForegroundColor Yellow
     Start-Process `
         -FilePath $python `
         -ArgumentList "-m streamlit run app.py --server.port 8501 --server.headless true" `
         -WorkingDirectory $PSScriptRoot `
         -WindowStyle Hidden
 } else {
-    Write-Host "`n[1/3] SentinelX Streamlit server is already running on port 8501." -ForegroundColor Green
+    Write-Host "`n[1/3] SPLASH FORGE Streamlit server is already running on port 8501." -ForegroundColor Green
 }
 
 # Wait for Streamlit HTTP 200
@@ -43,7 +43,7 @@ if (-not $healthy) {
     Write-Host "[ERROR] Streamlit did not respond on http://127.0.0.1:8501" -ForegroundColor Red
     exit 1
 }
-Write-Host "      SentinelX local server is Healthy (HTTP 200 OK)" -ForegroundColor Green
+Write-Host "      SPLASH FORGE local server is Healthy (HTTP 200 OK)" -ForegroundColor Green
 
 # 2. Check cloudflared binary
 $cloudflared = Join-Path $PSScriptRoot "cloudflared.exe"
@@ -87,18 +87,18 @@ if (-not $cfRunning) {
 if ($tunnelUrl) {
     Set-Content -Path (Join-Path $PSScriptRoot "tunnel_url.txt") -Value $tunnelUrl -Force
     Write-Host "`n================================================================" -ForegroundColor Green
-    Write-Host "   SENTINELX SOC PLATFORM -- SECURE PUBLIC ACCESS READY         " -ForegroundColor Green
+    Write-Host "   SPLASH FORGE SOC PLATFORM -- SECURE PUBLIC ACCESS READY      " -ForegroundColor Green
     Write-Host "================================================================" -ForegroundColor Green
     Write-Host " PUBLIC HTTPS URL : " -NoNewline; Write-Host $tunnelUrl -ForegroundColor Cyan
     Write-Host " LOCAL ACCESS     : " -NoNewline; Write-Host "http://localhost:8501" -ForegroundColor Gray
     Write-Host " STATUS           : " -NoNewline; Write-Host "LIVE & OPERATIONAL (Cross-network ready)" -ForegroundColor Green
     Write-Host ""
-    Write-Host " DEMO LOGIN CREDENTIALS (TEAM & JUDGES):" -ForegroundColor Yellow
-    Write-Host "   Analyst : analyst / SentinelX@Analyst2026 (Role: ANALYST - Investigations)"
-    Write-Host "   Admin   : Private administrator access secured via .env (Host only)"
+    Write-Host " DEMO LOGIN ROLES (TEAM & JUDGES):" -ForegroundColor Yellow
+    Write-Host "   Analyst : Role: ANALYST - Investigations (Default analyst account seeded)"
+    Write-Host "   Admin   : Role: ADMIN - Security Operations Lead (Secured via .env)"
     Write-Host ""
     Write-Host " Share the PUBLIC HTTPS URL above with your teammates and judges!" -ForegroundColor Cyan
-    Write-Host " To stop SentinelX and the tunnel, run: .\stop_sentinelx.ps1" -ForegroundColor Gray
+    Write-Host " To stop SPLASH FORGE and the tunnel, run: .\stop_sentinelx.ps1" -ForegroundColor Gray
     Write-Host "================================================================" -ForegroundColor Green
 } else {
     Write-Host "[ERROR] Could not extract public tunnel URL. Check tunnel.log." -ForegroundColor Red

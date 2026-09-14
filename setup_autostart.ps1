@@ -28,7 +28,7 @@ if (-not (Test-Path $appPy)) {
 }
 
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "   SENTINELX SOC PLATFORM -- LOCAL AUTO-START CONFIGURATION    " -ForegroundColor Cyan
+Write-Host "   SPLASH FORGE SOC PLATFORM -- LOCAL AUTO-START CONFIGURATION  " -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host " Project Directory : $projectDir" -ForegroundColor Gray
 Write-Host " Python Executable : $pythonExe" -ForegroundColor Gray
@@ -44,8 +44,8 @@ $rootFolder = $service.GetFolder("\")
 
 # Create task definition
 $taskDef = $service.NewTask(0)
-$taskDef.RegistrationInfo.Description = "SentinelX Autonomous SOC Platform - Local Background Auto-Start (Port 8501)"
-$taskDef.RegistrationInfo.Author = "SentinelX"
+$taskDef.RegistrationInfo.Description = "SPLASH FORGE Autonomous SOC Platform - Local Background Auto-Start (Port 8501)"
+$taskDef.RegistrationInfo.Author = "SPLASH FORGE"
 
 # 1. Trigger: User Logon
 $trigger = $taskDef.Triggers.Create(9) # TASK_TRIGGER_LOGON = 9
@@ -90,10 +90,10 @@ try {
 
 # 5. Optionally start immediately or verify health
 if ($StartNow) {
-    Write-Host "`nStarting SentinelX in background via Task Scheduler..." -ForegroundColor Yellow
+    Write-Host "`nStarting SPLASH FORGE in background via Task Scheduler..." -ForegroundColor Yellow
     $registeredTask.Run($null) | Out-Null
     
-    Write-Host "Waiting for SentinelX to initialize on http://127.0.0.1:8501..." -ForegroundColor Yellow
+    Write-Host "Waiting for SPLASH FORGE to initialize on http://127.0.0.1:8501..." -ForegroundColor Yellow
     $healthy = $false
     for ($i = 0; $i -lt 30; $i++) {
         Start-Sleep -Milliseconds 500
@@ -107,7 +107,7 @@ if ($StartNow) {
     }
     
     if ($healthy) {
-        Write-Host "[SUCCESS] SentinelX is active and healthy on http://127.0.0.1:8501" -ForegroundColor Green
+        Write-Host "[SUCCESS] SPLASH FORGE is active and healthy on http://127.0.0.1:8501" -ForegroundColor Green
     } else {
         Write-Host "[WARNING] Task started, but health endpoint did not respond within 15 seconds." -ForegroundColor Yellow
     }
@@ -115,7 +115,7 @@ if ($StartNow) {
 
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host " Auto-start is configured. SentinelX will launch automatically" -ForegroundColor White
+Write-Host " Auto-start is configured. SPLASH FORGE will launch automatically" -ForegroundColor White
 Write-Host " whenever you log into Windows." -ForegroundColor White
 Write-Host ""
 Write-Host " To manually start the task now : .\setup_autostart.ps1 -StartNow" -ForegroundColor Gray

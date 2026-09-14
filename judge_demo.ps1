@@ -33,7 +33,7 @@ function Send-SentinelEvent {
 }
 
 Write-Host "============================================================"
-Write-Host " SENTINELX - AUTHORIZED JUDGE DEMO SIMULATION"
+Write-Host " SPLASH FORGE - AUTHORIZED JUDGE DEMO SIMULATION"
 Write-Host "============================================================"
 Write-Host ""
 
@@ -48,7 +48,7 @@ Write-Host "[2/5] Brute-force simulation: 5 failed logins"
         source_ip = "10.0.0.50"
         username = "windows_demo"
         status = "FAILED"
-        message = "Authorized SentinelX demo failed login attempt $_"
+        message = "Authorized SPLASH FORGE demo failed login attempt $_"
     }
     Start-Sleep -Seconds 1
 }
@@ -62,7 +62,7 @@ foreach ($port in $ports) {
         source_ip = "10.0.0.50"
         username = "windows_demo"
         status = "FAILED"
-        message = "Authorized SentinelX demo connection attempt to port $port"
+        message = "Authorized SPLASH FORGE demo connection attempt to port $port"
         port = $port
     }
     Start-Sleep -Seconds 5
@@ -76,7 +76,7 @@ Write-Host "[4/5] Privilege + PowerShell simulation"
         source_ip = "10.0.0.50"
         username = "windows_demo"
         status = "SUCCESS"
-        message = "Authorized SentinelX demo privilege escalation event $_"
+        message = "Authorized SPLASH FORGE demo privilege escalation event $_"
     }
     Start-Sleep -Seconds 1
 }
@@ -86,7 +86,7 @@ Send-SentinelEvent @{
     source_ip = "10.0.0.50"
     username = "windows_demo"
     status = "SUCCESS"
-    message = "Authorized SentinelX demo PowerShell ExecutionPolicy Bypass"
+    message = "Authorized SPLASH FORGE demo PowerShell ExecutionPolicy Bypass"
 }
 Start-Sleep -Seconds 1
 Send-SentinelEvent @{
@@ -94,13 +94,13 @@ Send-SentinelEvent @{
     source_ip = "10.0.0.50"
     username = "windows_demo"
     status = "SUCCESS"
-    message = "Authorized SentinelX demo PowerShell EncodedCommand"
+    message = "Authorized SPLASH FORGE demo PowerShell EncodedCommand"
 }
 Write-Host ""
 
 Write-Host "[5/5] Simulation complete."
 Write-Host ""
-Write-Host "Open SentinelX and show:"
+Write-Host "Open SPLASH FORGE and show:"
 Write-Host "  Events -> Alerts -> Incident -> Evidence/Timeline"
 Write-Host "  Investigation -> Recommended Response -> Containment -> Verification"
 Write-Host ""

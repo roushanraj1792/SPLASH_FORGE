@@ -1,7 +1,7 @@
-# SentinelX — Hackathon Setup & Upgrade Plan
+# SPLASH FORGE — Hackathon Setup & Upgrade Plan
 
 ## Goal
-Build SentinelX into a stable, demo-ready AI-assisted SOC platform while keeping one controlled application source of truth.
+Build SPLASH FORGE into a stable, demo-ready AI-assisted SOC platform while keeping one controlled application source of truth.
 
 ## Phase 0 — Freeze and baseline
 1. Keep the current `app.py`.

@@ -1,7 +1,7 @@
-# SentinelX — AI Development Rules
+# SPLASH FORGE — AI Development Rules
 
 ## Mission
-SentinelX is an AI-assisted Security Operations Center (SOC) platform. Preserve working security functionality while improving reliability, explainability, usability, and hackathon readiness.
+SPLASH FORGE is an AI-assisted Security Operations Center (SOC) platform. Preserve working security functionality while improving reliability, explainability, usability, and hackathon readiness.
 
 ## Non-negotiable rules
 1. Never blindly replace `app.py`.

@@ -11,7 +11,7 @@ $ErrorActionPreference = "Continue"
 $taskName = "SentinelX_AutoStart"
 
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "   SENTINELX SOC PLATFORM -- REMOVE LOCAL AUTO-START           " -ForegroundColor Cyan
+Write-Host "   SPLASH FORGE SOC PLATFORM -- REMOVE LOCAL AUTO-START        " -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
 # Connect to Windows Task Scheduler via COM
@@ -51,4 +51,4 @@ if ($StopRunning -or $true) {
     }
 }
 
-Write-Host "`nSentinelX auto-start removal complete." -ForegroundColor Green
+Write-Host "`nSPLASH FORGE auto-start removal complete." -ForegroundColor Green

@@ -34,7 +34,7 @@ def submit_event(event):
 
 
 def simulate_brute_force():
-    print("SentinelX Brute Force Attack Simulator")
+    print("SPLASH FORGE Brute Force Attack Simulator")
     print("--------------------------------------")
 
     attacker_ip = "192.168.1.101"

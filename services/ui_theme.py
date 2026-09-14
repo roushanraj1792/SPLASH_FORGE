@@ -1,5 +1,5 @@
 """
-SentinelX — Premium SOC Design System & UI Presentation Module
+SPLASH FORGE — Premium SOC Design System & UI Presentation Module
 
 Provides:
 - Design tokens (colors, surfaces, spacing, typography)
@@ -731,7 +731,7 @@ def render_app_header(username: str, role: str) -> str:
                 <circle cx="24" cy="24" r="3.2" fill="#38BDF8" stroke="#060A12" stroke-width="1.6"/>
             </svg>
             <div class="sx-brand-text">
-                <div class="sx-brand-title">SENTINEL<span style="color:#38BDF8;">X</span></div>
+                <div class="sx-brand-title" data-engine="SENTINELX">SPLASH <span style="color:#38BDF8;">FORGE</span></div>
                 <div class="sx-brand-sub">Autonomous Security Operations Center</div>
             </div>
         </div>
@@ -810,8 +810,8 @@ def render_login_header() -> str:
                 <circle cx="24" cy="24" r="3.2" fill="#38BDF8" stroke="#060A12" stroke-width="1.6"/>
             </svg>
         </div>
-        <div style="font-size: 1.70rem; font-weight: 900; letter-spacing: 2px; color: #F8FAFC;">
-            SENTINEL<span style="color: #38BDF8;">X</span>
+        <div style="font-size: 1.70rem; font-weight: 900; letter-spacing: 2px; color: #F8FAFC;" data-engine="SENTINELX">
+            SPLASH <span style="color: #38BDF8;">FORGE</span>
         </div>
         <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 1.4px; color: #94A3B8; text-transform: uppercase; margin-top: 4px; margin-bottom: 24px;">
             Autonomous Security Operations Center

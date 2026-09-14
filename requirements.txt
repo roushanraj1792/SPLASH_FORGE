@@ -1,4 +1,4 @@
-﻿# SentinelX — Core Python Dependencies
+# SPLASH FORGE — Core Python Dependencies
 streamlit>=1.30.0
 google-genai>=0.1.0
 python-dotenv>=1.0.0

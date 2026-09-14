@@ -1,5 +1,5 @@
 """
-SentinelX — Enterprise Authentication & Role-Based Access Control (RBAC)
+SPLASH FORGE — Enterprise Authentication & Role-Based Access Control (RBAC)
 PBKDF2-HMAC-SHA256 password hashing with constant-time verification.
 Provides multi-user session management and privilege separation for SOC teams.
 """

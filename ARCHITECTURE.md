@@ -1,8 +1,8 @@
-# SentinelX — System Architecture & Engineering Specification
+# SPLASH FORGE — System Architecture & Engineering Specification
 
 ## 1. System Overview
 
-**SentinelX** is an Autonomous Security Operations Center (SOC) and Mini-SIEM platform engineered for real-time security telemetry ingestion, automated threat detection, risk-based prioritization, incident correlation, evidence-grounded AI forensic investigation, reversible containment, and stakeholder alerting.
+**SPLASH FORGE** is an Autonomous Security Operations Center (SOC) and Mini-SIEM platform engineered for real-time security telemetry ingestion, automated threat detection, risk-based prioritization, incident correlation, evidence-grounded AI forensic investigation, reversible containment, and stakeholder alerting.
 
 The platform provides a centralized command-and-control interface designed for security analysts and SOC leads to rapidly detect, triage, investigate, and remediate cyber threats with complete auditability and zero destructive side effects.
 
@@ -10,7 +10,7 @@ The platform provides a centralized command-and-control interface designed for s
 
 ## 2. Technology Stack
 
-SentinelX is built exclusively with verified, lightweight, and resilient open-source technologies:
+SPLASH FORGE is built exclusively with verified, lightweight, and resilient open-source technologies:
 
 - **Core Runtime**: Python 3.14 (Virtual Environment in `./venv`)
 - **Presentation Layer**: Streamlit (v1.x) with custom responsive HTML5/CSS3 glassmorphic design system
@@ -159,7 +159,7 @@ Telegram Incident Alert (services/telegram_alert.py)
 
 ## 7. Authentication & Role Separation
 
-SentinelX enforces strict role-based access control (RBAC):
+SPLASH FORGE enforces strict role-based access control (RBAC):
 - **Admin Role (`ADMIN`)**:
   - Requires credentials configured securely via environment variable `SENTINELX_ADMIN_PASSWORD`.
   - Authenticated using constant-time string comparison (`secrets.compare_digest`) with single/double-quote resilience and whitespace trimming.
@@ -173,7 +173,7 @@ SentinelX enforces strict role-based access control (RBAC):
 
 ## 8. AI Copilot Integration & Safeguards
 
-The SentinelX AI Copilot (`services/ai_copilot.py`) operates as an assistive analyst tool:
+The SPLASH FORGE AI Copilot (`services/ai_copilot.py`) operates as an assistive analyst tool:
 - **Evidence-Grounded**: All prompt payloads supplied to Google Gemini (`gemini-3.6-flash`) are strictly constructed from structured database evidence, including observed timestamps, event types, raw log messages, extracted IOCs, and MITRE tactic identifiers.
 - **Safety Boundary**: The AI model **never** directly executes containment actions, firewall rules, or destructive commands. All recommendations require human analyst authorization and confirmation in the UI.
 - **Deterministic Fallback**: If the Gemini API key is missing, network access is severed, or API quotas (HTTP 429) are exhausted, the system seamlessly activates a deterministic rule-based analysis engine. This fallback extracts IOCs, calculates attack timelines, and delivers structured response guidance without throwing unhandled exceptions.

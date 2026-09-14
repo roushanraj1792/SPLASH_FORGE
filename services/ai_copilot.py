@@ -11,7 +11,7 @@ load_dotenv()
 
 
 # ============================================================
-# SENTINELX AI SOC COPILOT
+# SPLASH FORGE AI SOC COPILOT
 # ============================================================
 
 GEMINI_MODEL = "gemini-3.6-flash"
@@ -253,7 +253,7 @@ def build_incident_context(
 
     context = []
 
-    context.append("SENTINELX SECURITY INCIDENT")
+    context.append("SPLASH FORGE SECURITY INCIDENT")
     context.append("================================")
 
     context.append(
@@ -353,7 +353,7 @@ def generate_rule_based_analysis(
 ) -> Dict:
     """
     Deterministic fallback analysis.
-    SentinelX remains functional even if Gemini is unavailable.
+    SPLASH FORGE remains functional even if Gemini is unavailable.
     """
 
     incident_data = normalize_record(incident)
@@ -405,7 +405,7 @@ def generate_rule_based_analysis(
     recommended_response = [
         "Continue monitoring the detected source activity.",
         "Validate the source and affected entities using available SOC telemetry.",
-        "If malicious activity is confirmed, apply the predefined SentinelX containment policy.",
+        "If malicious activity is confirmed, apply the predefined SPLASH FORGE containment policy.",
         "Document the investigation and response actions."
     ]
 
@@ -419,18 +419,18 @@ def generate_rule_based_analysis(
     )
 
     what_happened = (
-        f"SentinelX correlated {len(normalized_events)} security event(s) originating "
+        f"SPLASH FORGE correlated {len(normalized_events)} security event(s) originating "
         f"from source {source_ip} demonstrating {alert_type} patterns {time_range_str}."
     )
 
     why_suspicious = (
         f"Observed behavior deviates from baseline security thresholds with {alert_type} activity "
         f"(Risk Score: {risk_score}/100, Severity: {severity}). The activity directly maps to "
-        f"MITRE ATT&CK technique {mitre} identified by the SentinelX detection engine."
+        f"MITRE ATT&CK technique {mitre} identified by the SPLASH FORGE detection engine."
     )
 
     verification_guidance = [
-        "Verify source IP containment status in the SentinelX Active Blocklist registry.",
+        "Verify source IP containment status in the SPLASH FORGE Active Blocklist registry.",
         "Inspect subsequent live telemetry feed to confirm 0 ongoing attempts from the quarantined source.",
         "Check identity logs for affected usernames to ensure credentials remain secure.",
         "When containment verification is complete or benign activity confirmed, use Reversible Containment to unblock."
@@ -438,7 +438,7 @@ def generate_rule_based_analysis(
 
     return {
         "incident_summary": (
-            f"SentinelX detected {alert_type} activity "
+            f"SPLASH FORGE detected {alert_type} activity "
             f"from {source_ip} based on the supplied security evidence."
         ),
 
@@ -454,7 +454,7 @@ def generate_rule_based_analysis(
         "mitre_explanation": (
             f"The incident is mapped to MITRE ATT&CK "
             f"technique {mitre}. The technique mapping "
-            f"comes from the SentinelX detection engine."
+            f"comes from the SPLASH FORGE detection engine."
         ),
 
         "investigation_steps": investigation_steps,
@@ -542,13 +542,13 @@ def generate_gemini_analysis(
     )
 
     prompt = f"""
-You are SentinelX AI SOC Copilot.
+You are SPLASH FORGE AI SOC Copilot.
 
 You are assisting a cybersecurity analyst in a defensive SOC.
 
 IMPORTANT SAFETY RULES:
 
-- Analyze only the supplied SentinelX security incident.
+- Analyze only the supplied SPLASH FORGE security incident.
 - The supplied incident context and correlated events are the ONLY source of incident-specific facts.
 - Never invent, assume, estimate, or fabricate evidence.
 - Never invent timestamps, IP addresses, usernames, hostnames, destination IPs, ports, processes, commands, tools, malware, files, attack methods, or network details.
@@ -561,8 +561,8 @@ IMPORTANT SAFETY RULES:
 - Clearly distinguish observed evidence from possible explanations and investigation recommendations.
 - General cybersecurity knowledge may be used only for explaining MITRE ATT&CK techniques or giving defensive investigation recommendations.
 - Do not add new incident facts from general cybersecurity knowledge.
-- SentinelX deterministic detection results are authoritative for alert type, severity, risk score, and MITRE ATT&CK mapping.
-- Do not change or override SentinelX detection results.
+- SPLASH FORGE deterministic detection results are authoritative for alert type, severity, risk score, and MITRE ATT&CK mapping.
+- Do not change or override SPLASH FORGE detection results.
 
 DEFENSIVE SOC RULES:
 
@@ -572,7 +572,7 @@ DEFENSIVE SOC RULES:
 - Do not provide offensive attack instructions.
 - Provide only defensive investigation and response recommendations.
 
-Analyze the following SentinelX incident:
+Analyze the following SPLASH FORGE incident:
 
 {context}
 
@@ -664,7 +664,7 @@ Use exactly this structure:
         or not isinstance(result["verification_guidance"], list)
     ):
         result["verification_guidance"] = [
-            "Verify host IP containment status in SentinelX Active Blocklist.",
+            "Verify host IP containment status in SPLASH FORGE Active Blocklist.",
             "Monitor incoming telemetry to confirm 0 ongoing attempts from source.",
             "Review identity audit logs for targeted usernames to confirm safety."
         ]
@@ -687,7 +687,7 @@ def analyze_incident(
     events: List[Dict]
 ) -> Dict:
     """
-    Main SentinelX AI Copilot entry point.
+    Main SPLASH FORGE AI Copilot entry point.
 
     Gemini is attempted first.
     If Gemini fails, deterministic fallback is returned.

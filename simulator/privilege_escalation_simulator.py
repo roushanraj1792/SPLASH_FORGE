@@ -37,7 +37,7 @@ def submit_event(event):
 def generate_privilege_escalation_events():
     initialize_database()
 
-    print("SentinelX Privilege Escalation Simulator")
+    print("SPLASH FORGE Privilege Escalation Simulator")
     print("---------------------------------------")
 
     event_ids = []

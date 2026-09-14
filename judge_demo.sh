@@ -11,8 +11,8 @@ if [[ -z "$TOKEN" ]]; then
 fi
 
 echo "============================================================"
-echo " SENTINELX — AUTHORIZED JUDGE DEMO SIMULATION"
-echo " Target: SentinelX ingestion API"
+echo " SPLASH FORGE — AUTHORIZED JUDGE DEMO SIMULATION"
+echo " Target: SPLASH FORGE ingestion API"
 echo "============================================================"
 echo
 
@@ -32,7 +32,7 @@ send_event() {
 
 echo "[2/5] Brute-force simulation: 5 failed logins"
 for i in {1..5}; do
-  send_event "{\"event_type\":\"LOGIN\",\"source_ip\":\"10.0.0.50\",\"username\":\"kali_demo\",\"status\":\"FAILED\",\"message\":\"Authorized SentinelX demo failed login attempt $i\"}"
+  send_event "{\"event_type\":\"LOGIN\",\"source_ip\":\"10.0.0.50\",\"username\":\"kali_demo\",\"status\":\"FAILED\",\"message\":\"Authorized SPLASH FORGE demo failed login attempt $i\"}"
   sleep 1
 done
 echo
@@ -40,25 +40,25 @@ echo
 echo "[3/5] Port-scan simulation: 10 unique ports"
 ports=(21 22 23 25 53 80 110 135 443 445)
 for port in "${ports[@]}"; do
-  send_event "{\"event_type\":\"NETWORK_CONNECTION\",\"source_ip\":\"10.0.0.50\",\"username\":\"kali_demo\",\"status\":\"FAILED\",\"message\":\"Authorized SentinelX demo connection attempt to port $port\",\"port\":$port}"
+  send_event "{\"event_type\":\"NETWORK_CONNECTION\",\"source_ip\":\"10.0.0.50\",\"username\":\"kali_demo\",\"status\":\"FAILED\",\"message\":\"Authorized SPLASH FORGE demo connection attempt to port $port\",\"port\":$port}"
   sleep 5
 done
 echo
 
 echo "[4/5] Privilege + PowerShell simulation"
 for i in {1..3}; do
-  send_event "{\"event_type\":\"PRIVILEGE_CHANGE\",\"source_ip\":\"10.0.0.50\",\"username\":\"kali_demo\",\"status\":\"SUCCESS\",\"message\":\"Authorized SentinelX demo privilege escalation event $i\"}"
+  send_event "{\"event_type\":\"PRIVILEGE_CHANGE\",\"source_ip\":\"10.0.0.50\",\"username\":\"kali_demo\",\"status\":\"SUCCESS\",\"message\":\"Authorized SPLASH FORGE demo privilege escalation event $i\"}"
   sleep 1
 done
 
-send_event '{"event_type":"POWERSHELL","source_ip":"10.0.0.50","username":"kali_demo","status":"SUCCESS","message":"Authorized SentinelX demo PowerShell ExecutionPolicy Bypass"}'
+send_event '{"event_type":"POWERSHELL","source_ip":"10.0.0.50","username":"kali_demo","status":"SUCCESS","message":"Authorized SPLASH FORGE demo PowerShell ExecutionPolicy Bypass"}'
 sleep 1
-send_event '{"event_type":"POWERSHELL","source_ip":"10.0.0.50","username":"kali_demo","status":"SUCCESS","message":"Authorized SentinelX demo PowerShell EncodedCommand"}'
+send_event '{"event_type":"POWERSHELL","source_ip":"10.0.0.50","username":"kali_demo","status":"SUCCESS","message":"Authorized SPLASH FORGE demo PowerShell EncodedCommand"}'
 echo
 
 echo "[5/5] Simulation complete."
 echo
-echo "Open SentinelX and show:"
+echo "Open SPLASH FORGE and show:"
 echo "  Events → Alerts → Incident → Evidence/Timeline"
 echo "  Investigation → Recommended Response → Containment → Verification"
 echo

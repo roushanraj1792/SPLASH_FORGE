@@ -1,4 +1,4 @@
-# SentinelX Risk Engine
+# SPLASH FORGE Risk Engine
 
 SEVERITY_SCORES = {
     "LOW": 20,

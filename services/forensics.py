@@ -64,9 +64,9 @@ def generate_forensic_dossier_json(
     dossier = {
         "export_metadata": {
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "generator": "SentinelX Autonomous SOC Platform v2.0",
+            "generator": "SPLASH FORGE Autonomous SOC Platform v2.0",
             "spec_version": "1.0-forensic-dossier",
-            "analyst_role": "SentinelX Autonomous SOC Operations"
+            "analyst_role": "SPLASH FORGE Autonomous SOC Operations"
         },
         "incident_profile": {
             "incident_id": incident.get("incident_id", "UNKNOWN"),
@@ -125,9 +125,10 @@ def generate_forensic_dossier_markdown(
     now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = []
-    lines.append(f"# 🛡️ SentinelX SOC Forensic Dossier: {inc_id}")
+    lines.append(f"# 🛡️ SPLASH FORGE SOC Forensic Dossier: {inc_id}")
+    lines.append(f"<!-- # 🛡️ SentinelX SOC Forensic Dossier: {inc_id} -->")
     lines.append("")
-    lines.append(f"**Document Generated:** `{now_utc}` | **Classification:** TLP:AMBER | **Platform:** SentinelX Autonomous SOC v2.0")
+    lines.append(f"**Document Generated:** `{now_utc}` | **Classification:** TLP:AMBER | **Platform:** SPLASH FORGE Autonomous SOC v2.0")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -201,9 +202,9 @@ def generate_forensic_dossier_markdown(
 
     # AI SOC Copilot Intelligence (if present)
     if ai_report:
-        lines.append("## 5. SentinelX AI Copilot Intelligence Assessment")
+        lines.append("## 5. SPLASH FORGE AI Copilot Intelligence Assessment")
         lines.append("")
-        lines.append(f"**Intelligence Engine:** `{ai_report.get('ai_source', 'SentinelX AI Copilot')}`")
+        lines.append(f"**Intelligence Engine:** `{ai_report.get('ai_source', 'SPLASH FORGE AI Copilot')}`")
         lines.append("")
         if ai_report.get("incident_summary"):
             lines.append("### Executive Summary")
@@ -252,7 +253,7 @@ def generate_forensic_dossier_markdown(
         lines.append("_No status changes recorded._")
     lines.append("")
     lines.append("---")
-    lines.append("*End of SentinelX Incident Forensic Dossier. Confidential — Authorized SOC Personnel Only.*")
+    lines.append("*End of SPLASH FORGE Incident Forensic Dossier. Confidential — Authorized SOC Personnel Only.*")
     lines.append("")
 
     return "\n".join(lines)

@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Continue"
 
 Set-Location $PSScriptRoot
 
@@ -7,12 +7,12 @@ while ($true) {
     Clear-Host
 
     Write-Host "============================================================" -ForegroundColor Cyan
-    Write-Host "                 SENTINELX CONTROL PANEL" -ForegroundColor Cyan
+    Write-Host "                SPLASH FORGE CONTROL PANEL" -ForegroundColor Cyan
     Write-Host "============================================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "  [1] Clean + Start SentinelX" -ForegroundColor Green
+    Write-Host "  [1] Clean + Start SPLASH FORGE" -ForegroundColor Green
     Write-Host "  [2] Clean Demo Database" -ForegroundColor Yellow
-    Write-Host "  [3] Stop SentinelX" -ForegroundColor Red
+    Write-Host "  [3] Stop SPLASH FORGE" -ForegroundColor Red
     Write-Host "  [0] Exit" -ForegroundColor Gray
     Write-Host ""
 
@@ -22,7 +22,7 @@ while ($true) {
 
         "1" {
             Write-Host ""
-            Write-Host "Starting CLEAN SentinelX demo..." -ForegroundColor Green
+            Write-Host "Starting CLEAN SPLASH FORGE demo..." -ForegroundColor Green
             Write-Host ""
             & ".\start_clean_demo.ps1"
             Write-Host ""
@@ -42,7 +42,7 @@ while ($true) {
 
         "3" {
             Write-Host ""
-            Write-Host "Stopping SentinelX..." -ForegroundColor Red
+            Write-Host "Stopping SPLASH FORGE..." -ForegroundColor Red
             Write-Host ""
             & ".\stop_sentinelx.ps1"
             Write-Host ""
@@ -51,7 +51,7 @@ while ($true) {
 
         "0" {
             Write-Host ""
-            Write-Host "Exiting SentinelX Control Panel..." -ForegroundColor Gray
+            Write-Host "Exiting SPLASH FORGE Control Panel..." -ForegroundColor Gray
             break
         }
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 # ============================================================
-# SENTINELX SAFE CONTAINMENT / POLICY ENGINE
+# SPLASH FORGE SAFE CONTAINMENT / POLICY ENGINE
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -175,7 +175,7 @@ def block_source_ip(incident_id, source_ip, reason):
         cursor = connection.cursor()
 
         # --------------------------------------------------------
-        # Add source IP to controlled SentinelX blocklist
+        # Add source IP to controlled SPLASH FORGE blocklist
         # --------------------------------------------------------
 
         cursor.execute(
@@ -243,7 +243,7 @@ def block_source_ip(incident_id, source_ip, reason):
         "status": "SUCCESS",
         "message": (
             f"Source IP {source_ip} was safely added "
-            "to the SentinelX blocklist."
+            "to the SPLASH FORGE blocklist."
         ),
         "timestamp": timestamp
     }
@@ -332,7 +332,7 @@ def unblock_source_ip(incident_id, source_ip, reason="Analyst remediation / veri
         "status": "SUCCESS",
         "message": (
             f"Source IP {source_ip} was safely removed "
-            "from the SentinelX blocklist."
+            "from the SPLASH FORGE blocklist."
         ),
         "timestamp": timestamp
     }

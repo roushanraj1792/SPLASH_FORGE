@@ -54,7 +54,7 @@ def generate_suspicious_powershell_events():
         }
     ]
 
-    print("SentinelX Suspicious PowerShell Simulator")
+    print("SPLASH FORGE Suspicious PowerShell Simulator")
     print("-----------------------------------------")
 
     event_ids = []

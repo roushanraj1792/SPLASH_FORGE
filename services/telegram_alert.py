@@ -97,7 +97,7 @@ def send_test_alert():
     )
 
     message = (
-        "🛡️ SentinelX Test Alert\n\n"
+        "🛡️ SPLASH FORGE Test Alert\n\n"
         "Telegram integration is working successfully.\n\n"
         f"Time: {timestamp}"
     )
@@ -142,14 +142,14 @@ def send_incident_alert(incident):
     )))
 
     message = (
-        "🚨 SentinelX Security Alert\n\n"
+        "🚨 SPLASH FORGE Security Alert\n\n"
         f"Incident: {incident_id}\n"
         f"Title: {title}\n"
         f"Severity: {severity}\n"
         f"Risk Score: {risk_score}/100\n"
         f"Source IP: <code>{source_ip}</code>\n"
         f"MITRE ATT&CK: {mitre}\n\n"
-        "SentinelX SOC detected a security incident."
+        "SPLASH FORGE SOC detected a security incident."
     )
 
     return send_telegram_message(message)

@@ -1,4 +1,4 @@
-﻿Write-Host "SentinelX validation starting..." -ForegroundColor Cyan
+Write-Host "SPLASH FORGE validation starting..." -ForegroundColor Cyan
 
 $python = ".\venv\Scripts\python.exe"
 
@@ -68,5 +68,5 @@ if ($process -and -not $process.HasExited) {
 }
 
 Write-Host "`n================================================" -ForegroundColor Cyan
-Write-Host "SentinelX validation completed." -ForegroundColor Cyan
+Write-Host "SPLASH FORGE validation completed." -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan

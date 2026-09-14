@@ -37,7 +37,7 @@ def submit_event(event):
 
 
 def simulate_port_scan():
-    print("SentinelX Port Scan Attack Simulator")
+    print("SPLASH FORGE Port Scan Attack Simulator")
     print("------------------------------------")
 
     attacker_ip = "192.168.1.61"

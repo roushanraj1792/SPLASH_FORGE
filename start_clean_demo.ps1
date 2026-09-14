@@ -1,7 +1,7 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 Write-Host "============================================================"
-Write-Host " SENTINELX - CLEAN LIVE DEMO START"
+Write-Host " SPLASH FORGE - CLEAN LIVE DEMO START"
 Write-Host "============================================================"
 Write-Host ""
 
@@ -13,7 +13,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "Starting SentinelX..."
+Write-Host "Starting SPLASH FORGE..."
 Write-Host ""
 
 & ".\start_public_sentinelx.ps1"
